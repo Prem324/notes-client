@@ -6,51 +6,96 @@ import NotesList from "../components/notes/NotesList";
 import Loader from "../components/common/Loader";
 import ErrorMessage from "../components/common/ErrorMessage";
 import NoteSearch from "../components/notes/NoteSearch";
+import Pagination from "../components/common/Pagination";
 
 import { noteService } from "../features/notes/noteService";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { useAuth } from "../features/auth/AuthContext";
 import useDebounce from "../hooks/useDebounce";
 
-function extractNotes(result) {
-  if (Array.isArray(result.data)) {
-    return result.data;
-  }
+const DEFAULT_LIMIT = 10;
 
-  if (Array.isArray(result.data?.notes)) {
+const defaultPagination = {
+  page: 1,
+  limit: DEFAULT_LIMIT,
+  total: 0,
+  totalPages: 1,
+  hasNextPage: false,
+  hasPrevPage: false,
+};
+
+function extractNotes(result) {
+  if (Array.isArray(result?.data?.notes)) {
     return result.data.notes;
   }
 
-  if (Array.isArray(result.notes)) {
+  if (Array.isArray(result?.notes)) {
     return result.notes;
+  }
+
+  if (Array.isArray(result?.data)) {
+    return result.data;
   }
 
   return [];
 }
 
 function extractNote(result) {
-  if (result.data?._id) {
-    return result.data;
-  }
-
-  if (result.data?.note?._id) {
+  if (result?.data?.note?._id) {
     return result.data.note;
   }
 
-  if (result.note?._id) {
+  if (result?.note?._id) {
     return result.note;
+  }
+
+  if (result?.data?._id) {
+    return result.data;
   }
 
   return null;
 }
 
+function extractPagination(result) {
+  const pagination = result?.data?.pagination || result?.pagination;
+
+  if (!pagination) {
+    return defaultPagination;
+  }
+
+  const total = Number(pagination.totalNotes || pagination.total || 0);
+  const limit = Number(pagination.limit || DEFAULT_LIMIT);
+  const page = Number(pagination.currentPage || pagination.page || 1);
+  const totalPages = Math.max(Number(pagination.totalPages || 1), 1);
+
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasPrevPage:
+      typeof pagination.hasPrevPage === "boolean"
+        ? pagination.hasPrevPage
+        : page > 1,
+    hasNextPage:
+      typeof pagination.hasNextPage === "boolean"
+        ? pagination.hasNextPage
+        : page < totalPages,
+  };
+}
+
 function NotesPage() {
   const [notes, setNotes] = useState([]);
   const [editingNote, setEditingNote] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(DEFAULT_LIMIT);
+  const [pagination, setPagination] = useState(defaultPagination);
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -58,16 +103,16 @@ function NotesPage() {
   const { logout } = useAuth();
 
   const noteStats = useMemo(() => {
-    const total = notes.length;
-    const completed = notes.filter((note) => note.completed).length;
-    const pending = total - completed;
+    const total = pagination.total;
+    const completedOnPage = notes.filter((note) => note.completed).length;
+    const pendingOnPage = notes.length - completedOnPage;
 
     return {
       total,
-      completed,
-      pending,
+      completedOnPage,
+      pendingOnPage,
     };
-  }, [notes]);
+  }, [notes, pagination.total]);
 
   const handleUnauthorized = useCallback(
     (error) => {
@@ -83,20 +128,24 @@ function NotesPage() {
   );
 
   const fetchNotes = useCallback(
-    async (searchValue = "") => {
+    async (pageValue = 1, searchValue = "") => {
       try {
         setLoading(true);
         setError("");
 
         const result = await noteService.getNotes({
-          page: 1,
-          limit: 10,
+          page: pageValue,
+          limit,
           search: searchValue,
         });
 
+        console.log("GET NOTES RESULT:", result);
+
         const notesFromBackend = extractNotes(result);
+        const paginationFromBackend = extractPagination(result);
 
         setNotes(notesFromBackend);
+        setPagination(paginationFromBackend);
       } catch (error) {
         if (handleUnauthorized(error)) return;
 
@@ -105,12 +154,12 @@ function NotesPage() {
         setLoading(false);
       }
     },
-    [handleUnauthorized]
+    [handleUnauthorized, limit]
   );
 
   useEffect(() => {
-    fetchNotes(debouncedSearch);
-  }, [debouncedSearch, fetchNotes]);
+    fetchNotes(page, debouncedSearch);
+  }, [page, debouncedSearch, fetchNotes]);
 
   async function handleAddNote(noteData) {
     try {
@@ -119,7 +168,11 @@ function NotesPage() {
 
       await noteService.createNote(noteData);
 
-      await fetchNotes(search);
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        await fetchNotes(1, debouncedSearch);
+      }
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
@@ -136,9 +189,13 @@ function NotesPage() {
 
       await noteService.deleteNote(noteId);
 
-      setNotes((prevNotes) =>
-        prevNotes.filter((note) => note._id !== noteId)
-      );
+      const remainingNotesOnPage = notes.filter((note) => note._id !== noteId);
+
+      if (remainingNotesOnPage.length === 0 && page > 1) {
+        setPage((prevPage) => prevPage - 1);
+      } else {
+        await fetchNotes(page, debouncedSearch);
+      }
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
@@ -231,10 +288,20 @@ function NotesPage() {
 
   const handleSearchChange = useCallback((value) => {
     setSearch(value);
+    setPage(1);
   }, []);
 
   const handleClearSearch = useCallback(() => {
     setSearch("");
+    setPage(1);
+  }, []);
+
+  const handlePrevPage = useCallback(() => {
+    setPage((prevPage) => Math.max(prevPage - 1, 1));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setPage((prevPage) => prevPage + 1);
   }, []);
 
   return (
@@ -253,13 +320,13 @@ function NotesPage() {
         </div>
 
         <div className="stat-card">
-          <span>Completed</span>
-          <strong>{noteStats.completed}</strong>
+          <span>Completed on this page</span>
+          <strong>{noteStats.completedOnPage}</strong>
         </div>
 
         <div className="stat-card">
-          <span>Pending</span>
-          <strong>{noteStats.pending}</strong>
+          <span>Pending on this page</span>
+          <strong>{noteStats.pendingOnPage}</strong>
         </div>
       </div>
 
@@ -282,14 +349,28 @@ function NotesPage() {
       {loading ? (
         <Loader message="Loading notes..." />
       ) : (
-        <NotesList
-          notes={notes}
-          search={search}
-          onDeleteNote={handleDeleteNote}
-          onToggleComplete={handleToggleComplete}
-          onStartEdit={handleStartEdit}
-          actionLoading={actionLoading}
-        />
+        <>
+          <NotesList
+            notes={notes}
+            search={search}
+            onDeleteNote={handleDeleteNote}
+            onToggleComplete={handleToggleComplete}
+            onStartEdit={handleStartEdit}
+            actionLoading={actionLoading}
+          />
+
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            currentCount={notes.length}
+            hasPrevPage={pagination.hasPrevPage}
+            hasNextPage={pagination.hasNextPage}
+            loading={loading || actionLoading}
+            onPrevPage={handlePrevPage}
+            onNextPage={handleNextPage}
+          />
+        </>
       )}
     </div>
   );
