@@ -412,3 +412,38 @@ form {
   text-align: center;
   opacity: 0.8;
 }
+
+.error-boundary {
+  max-width: 600px;
+  margin: 4rem auto;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 12px;
+  background: #fff3f3;
+  border: 1px solid #ffcccc;
+}
+
+.error-boundary h2 {
+  margin-bottom: 0.75rem;
+}
+
+.error-boundary p {
+  margin-bottom: 1rem;
+}
+
+.error-boundary pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  text-align: left;
+  overflow-x: auto;
+  background: #222;
+  color: #fff;
+  border-radius: 8px;
+}
+
+.error-boundary button {
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}

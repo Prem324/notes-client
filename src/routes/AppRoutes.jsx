@@ -13,6 +13,8 @@ const NoteDetailsPage = React.lazy(() => import("../pages/NoteDetailsPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
 const NotFoundPage = React.lazy(() => import("../pages/NotFoundPage"));
 
+
+
 function AppRoutes() {
   return (
     <Suspense fallback={<Loader message="Loading page..." />}>

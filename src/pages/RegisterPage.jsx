@@ -5,6 +5,8 @@ import RegisterForm from "../components/auth/RegisterForm";
 import ErrorMessage from "../components/common/ErrorMessage";
 import { authService } from "../features/auth/authService";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
+
 
 function RegisterPage() {
   const [error, setError] = useState("");
@@ -17,7 +19,8 @@ function RegisterPage() {
       setLoading(true);
       setError("");
 
-      await authService.register(formData);
+      const result=await authService.register(formData);
+      showSuccessToast(result.message || "Account created successfully. Please login.");
 
       navigate("/login",{
         state:{
@@ -25,7 +28,9 @@ function RegisterPage() {
         }
       })
     } catch (error) {
-      setError(getErrorMessage(error, "Registration failed"));
+      const message=getErrorMessage(error, "Registration failed");
+      setError(message);
+      showErrorToast(message);
     } finally {
       setLoading(false);
     }

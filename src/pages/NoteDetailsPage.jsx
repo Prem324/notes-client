@@ -14,6 +14,8 @@ import { commentService } from "../features/comments/commentService";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { useAuth } from "../features/auth/AuthContext";
 import { socket } from "../socket/socket";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
+
 
 
 function extractComments(result) {
@@ -185,15 +187,20 @@ function NoteDetailsPage() {
       const createdComment = extractComment(result);
 
       if (!createdComment) {
-        setError("Comment created but response format was unexpected");
+        const message="Comment created but response format was unexpected";
+        setError(message);
+        showErrorToast(message);
         return false;
       }
+      showSuccessToast(result.message || "Comment added successfully");
 
       return true;
     } catch (error) {
       if (handleUnauthorized(error)) return false;
 
-      setError(getErrorMessage(error, "Failed to add comment"));
+      const message=getErrorMessage(error, "Failed to add comment");
+      setError(message);
+      showErrorToast(message);
       return false;
     } finally {
       setCommentLoading(false);
@@ -215,12 +222,15 @@ function NoteDetailsPage() {
     }
 
     setNote(updatedNote);
+    showSuccessToast(result.message || "Attachment uploaded successfully");
 
     return true;
   } catch (error) {
     if (handleUnauthorized(error)) return false;
 
-    setError(getErrorMessage(error, "Failed to upload attachments"));
+    const message=getErrorMessage(error, "Failed to upload attachments");
+    setError(message);
+    showErrorToast(message);
     return false;
   } finally {
     setAttachmentUploadLoading(false);
@@ -240,15 +250,20 @@ async function handleDeleteAttachment(attachment) {
     const updatedNote = extractNote(result);
 
     if (!updatedNote) {
-      setError("Attachment deleted but response format was unexpected");
+      const message="Attachment deleted but response format was unexpected";
+      setError(message)
+      showErrorToast(message);
       return;
     }
 
     setNote(updatedNote);
+    showSuccessToast(result.message || "Attachment deleted successfully");
   } catch (error) {
     if (handleUnauthorized(error)) return;
 
-    setError(getErrorMessage(error, "Failed to delete attachment"));
+    const message=getErrorMessage(error, "Failed to delete attachment");
+    setError(message);
+    showErrorToast(message);
   } finally {
     setDeletingAttachmentId(null);
   }

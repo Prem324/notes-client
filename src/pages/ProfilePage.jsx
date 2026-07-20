@@ -5,7 +5,9 @@ import ProfileImageForm from "../components/profile/ProfileImageForm";
 import Button from "../components/common/Button";
 import Loader from "../components/common/Loader";
 import ErrorMessage from "../components/common/ErrorMessage";
-import SuccessMessage from "../components/common/SuccessMessage";
+//import SuccessMessage from "../components/common/SuccessMessage";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
+
 
 import { profileService } from "../features/profile/profileService";
 import { getErrorMessage } from "../utils/getErrorMessage";
@@ -33,7 +35,7 @@ function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  //const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
@@ -81,7 +83,7 @@ function ProfilePage() {
   try {
     setUploadLoading(true);
     setError("");
-    setSuccessMessage("");
+    //setSuccessMessage("");
 
     const result = await profileService.uploadProfilePicture(formData);
     const updatedProfile = extractProfile(result);
@@ -92,12 +94,15 @@ function ProfilePage() {
     }
 
     setProfile(updatedProfile);
-    setSuccessMessage("Profile picture uploaded successfully");
+    //setSuccessMessage("Profile picture uploaded successfully");
+    showSuccessToast(result.message || "Profile picture uploaded successfully");
     return true;
   } catch (error) {
     if (handleUnauthorized(error)) return false;
 
-    setError(getErrorMessage(error, "Failed to upload profile picture"));
+    const message=getErrorMessage(error, "Failed to upload profile picture");
+    setError(message);
+    showErrorToast(message);
     return false;
   } finally {
     setUploadLoading(false);
@@ -109,20 +114,28 @@ function ProfilePage() {
   try {
     setDeleteLoading(true);
     setError("");
-    setSuccessMessage("");
 
-    await profileService.deleteProfilePicture();
-    await fetchProfile();
+    const result = await profileService.deleteProfilePicture();
 
-    setSuccessMessage("Profile picture deleted successfully");
+    const updatedProfile = extractProfile(result);
+
+    if (updatedProfile) {
+      setProfile(updatedProfile);
+    } else {
+      await fetchProfile();
+    }
+
+    showSuccessToast(result.message || "Profile picture deleted successfully");
   } catch (error) {
     if (handleUnauthorized(error)) return;
 
-    setError(getErrorMessage(error, "Failed to delete profile picture"));
+    const message = getErrorMessage(error, "Failed to delete profile picture");
+    setError(message);
+    showErrorToast(message);
   } finally {
     setDeleteLoading(false);
   }
-}  
+}
 
 
   if (loading) {
@@ -139,7 +152,6 @@ function ProfilePage() {
 </div>
 
       <ErrorMessage message={error} />
-      <SuccessMessage message={successMessage} />
 
   {profile ? (
   <div className="profile-grid">

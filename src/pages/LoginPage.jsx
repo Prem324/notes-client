@@ -6,6 +6,8 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import { authService } from "../features/auth/authService";
 import { useAuth } from "../features/auth/AuthContext";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
+
 
 function LoginPage() {
   const [error, setError] = useState("");
@@ -26,9 +28,14 @@ function LoginPage() {
 
       login(result.data.token);
 
+      showSuccessToast(result.message || "Login successful");
+
+
       navigate("/notes");
     } catch (error) {
-      setError(getErrorMessage(error, "Login failed"));
+      const message=getErrorMessage(error, "Login failed");
+      setError(message);
+      showErrorToast(message);
     } finally {
       setLoading(false);
     }

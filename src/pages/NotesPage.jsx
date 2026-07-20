@@ -12,6 +12,7 @@ import { noteService } from "../features/notes/noteService";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { useAuth } from "../features/auth/AuthContext";
 import useDebounce from "../hooks/useDebounce";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
 
 const DEFAULT_LIMIT = 10;
 
@@ -166,7 +167,9 @@ function NotesPage() {
       setActionLoading(true);
       setError("");
 
-      await noteService.createNote(noteData);
+      const result=await noteService.createNote(noteData);
+
+      showSuccessToast(result.message || "Note created successfully");
 
       if (page !== 1) {
         setPage(1);
@@ -176,7 +179,9 @@ function NotesPage() {
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
-      setError(getErrorMessage(error, "Failed to create note"));
+      const message=getErrorMessage(error, "Failed to create note");
+      setError(message);
+      showErrorToast(message);
     } finally {
       setActionLoading(false);
     }
@@ -187,7 +192,9 @@ function NotesPage() {
       setActionLoading(true);
       setError("");
 
-      await noteService.deleteNote(noteId);
+      const result=await noteService.deleteNote(noteId);
+
+      showSuccessToast(result.message || "Note deleted successfully");
 
       const remainingNotesOnPage = notes.filter((note) => note._id !== noteId);
 
@@ -199,7 +206,9 @@ function NotesPage() {
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
-      setError(getErrorMessage(error, "Failed to delete note"));
+      const message=getErrorMessage(error, "Failed to delete note");
+      setError(message);
+      showErrorToast(message);
     } finally {
       setActionLoading(false);
     }
@@ -213,7 +222,9 @@ function NotesPage() {
       const noteToUpdate = notes.find((note) => note._id === noteId);
 
       if (!noteToUpdate) {
+        const message="Note not found";
         setError("Note not found");
+        showErrorToast(message);
         return;
       }
 
@@ -226,7 +237,9 @@ function NotesPage() {
       const savedNote = extractNote(result);
 
       if (!savedNote) {
-        setError("Note updated but response format was unexpected");
+        const message="Note updated but response format was unexpected";
+        setError(message);
+        showErrorToast(message)
         return;
       }
 
@@ -235,10 +248,18 @@ function NotesPage() {
           note._id === savedNote._id ? savedNote : note
         )
       );
+
+      showSuccessToast(
+      savedNote.completed
+        ? "Note marked as completed"
+        : "Note marked as pending"
+    );
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
-      setError(getErrorMessage(error, "Failed to update note status"));
+      const message=getErrorMessage(error, "Failed to update note status");
+      setError(message);
+      showErrorToast(message);
     } finally {
       setActionLoading(false);
     }
@@ -266,7 +287,9 @@ function NotesPage() {
       const savedNote = extractNote(result);
 
       if (!savedNote) {
-        setError("Note updated but response format was unexpected");
+        const message="Note updated but response format was unexpected";
+        setError(message);
+        showErrorToast(message);
         return;
       }
 
@@ -277,10 +300,13 @@ function NotesPage() {
       );
 
       setEditingNote(null);
+      showSuccessToast(result.message || "Note updated successfully");
     } catch (error) {
       if (handleUnauthorized(error)) return;
 
-      setError(getErrorMessage(error, "Failed to update note"));
+      const message = getErrorMessage(error, "Failed to update note");
+      setError(message);
+      showErrorToast(message);
     } finally {
       setActionLoading(false);
     }
