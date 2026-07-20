@@ -379,7 +379,7 @@ function NotesPage() {
           <NotesList
             notes={notes}
             search={search}
-            onDeleteNote={handeDeleteNote}
+            onDeleteNote={handleDeleteNote}
             onToggleComplete={handleToggleComplete}
             onStartEdit={handleStartEdit}
             actionLoading={actionLoading}
