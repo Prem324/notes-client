@@ -101,6 +101,7 @@ form {
   border-radius: 8px;
   padding: 10px 12px;
   background-color: #ffffff;
+  margin-bottom:14px;
 }
 
 .form-control:focus {
@@ -446,4 +447,10 @@ form {
   border: none;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.field-error {
+  margin-top: 0.35rem;
+  color: #dc2626;
+  font-size: 0.875rem;
 }

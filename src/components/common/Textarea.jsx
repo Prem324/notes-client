@@ -1,26 +1,30 @@
-function Textarea({
-  label,
-  name,
-  value,
-  onChange,
-  placeholder = "",
-  rows = 4,
-}) {
+import { forwardRef } from "react";
+
+const Textarea = forwardRef(function Textarea(
+  {
+    label,
+    name,
+    placeholder = "",
+    rows = 4,
+    ...rest
+  },
+  ref
+) {
   return (
-    <div className="form-group">
+    <div>
       {label && <label htmlFor={name}>{label}</label>}
 
       <textarea
+        ref={ref}
         id={name}
         name={name}
-        value={value}
-        onChange={onChange}
         placeholder={placeholder}
         rows={rows}
         className="form-control"
+        {...rest}
       />
     </div>
   );
-}
+});
 
 export default Textarea;

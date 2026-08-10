@@ -1,67 +1,69 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+
 import Button from "../common/Button";
-import ErrorMessage from "../common/ErrorMessage";
 
 function AttachmentForm({ onUploadAttachments, loading = false }) {
-  const [files, setFiles] = useState([]);
-  const [error, setError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm();
 
-  function handleFileChange(e) {
-    const selectedFiles = Array.from(e.target.files);
+  const selectedFiles = watch("attachments");
 
-    setFiles(selectedFiles);
-    setError("");
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-
-    if (files.length === 0) {
-      setError("Please select at least one file");
-      return;
-    }
-
-    if (files.length > 5) {
-      setError("You can upload maximum 5 files");
-      return;
-    }
-
+  async function handleFormSubmit(data) {
     const formData = new FormData();
 
-    files.forEach((file) => {
+    Array.from(data.attachments).forEach((file) => {
       formData.append("attachments", file);
     });
 
     const success = await onUploadAttachments(formData);
 
     if (success) {
-      setFiles([]);
-      e.target.reset();
+      reset();
     }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <h2>Upload Attachments</h2>
 
-      <ErrorMessage message={error} />
-
-      <label htmlFor="attachments">Attachments</label>
+      <label htmlFor="attachments">
+        Attachments
+      </label>
 
       <input
         id="attachments"
-        name="attachments"
         type="file"
         multiple
-        onChange={handleFileChange}
+        {...register("attachments", {
+          validate: {
+            required: (files) =>
+              files?.length > 0 ||
+              "Please select at least one file",
+
+            maxFiles: (files) =>
+              files?.length <= 5 ||
+              "You can upload maximum 5 files",
+          },
+        })}
       />
 
-      {files.length > 0 && (
+      {errors.attachments && (
+        <p className="field-error">
+          {errors.attachments.message}
+        </p>
+      )}
+
+      {selectedFiles?.length > 0 && (
         <div>
           <p>Selected files:</p>
+
           <ul>
-            {files.map((file) => (
+            {Array.from(selectedFiles).map((file) => (
               <li key={`${file.name}-${file.size}`}>
                 {file.name}
               </li>

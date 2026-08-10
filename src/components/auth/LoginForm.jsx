@@ -1,65 +1,65 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+
 import Button from "../common/Button";
 import Input from "../common/Input";
-import ErrorMessage from "../common/ErrorMessage";
 
 function LoginForm({ onLogin, loading = false }) {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  const [error, setError] = useState("");
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-
-    if (!formData.email.trim()) {
-      setError("Email is required");
-      return;
-    }
-
-    if (!formData.password.trim()) {
-      setError("Password is required");
-      return;
-    }
-
-    onLogin(formData);
+  function handleFormSubmit(data) {
+    onLogin(data);
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <h2>Login</h2>
-
-      <ErrorMessage message={error} />
 
       <Input
         label="Email"
-        name="email"
         type="email"
-        value={formData.email}
-        onChange={handleChange}
         placeholder="Enter your email"
+        {...register("email", {
+          required: "Email is required",
+          pattern: {
+            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            message: "Please enter a valid email address",
+          },
+        })}
       />
+
+      {errors.email && (
+        <p className="field-error">
+          {errors.email.message}
+        </p>
+      )}
 
       <Input
         label="Password"
-        name="password"
         type="password"
-        value={formData.password}
-        onChange={handleChange}
         placeholder="Enter your password"
+        {...register("password", {
+          required: "Password is required",
+          minLength: {
+            value: 6,
+            message: "Password must be at least 6 characters long",
+          },
+        })}
       />
+
+      {errors.password && (
+        <p className="field-error">
+          {errors.password.message}
+        </p>
+      )}
 
       <Button type="submit" disabled={loading}>
         {loading ? "Logging in..." : "Login"}

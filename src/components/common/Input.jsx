@@ -1,26 +1,30 @@
-function Input({
-  label,
-  name,
-  value,
-  onChange,
-  type = "text",
-  placeholder = "",
-}) {
+import { forwardRef } from "react";
+
+const Input = forwardRef(function Input(
+  {
+    label,
+    name,
+    type = "text",
+    placeholder = "",
+    ...rest
+  },
+  ref
+) {
   return (
-    <div className="form-group">
+    <div>
       {label && <label htmlFor={name}>{label}</label>}
 
       <input
+        ref={ref}
         id={name}
         name={name}
         type={type}
-        value={value}
-        onChange={onChange}
         placeholder={placeholder}
         className="form-control"
+        {...rest}
       />
     </div>
   );
-}
+});
 
 export default Input;
