@@ -214,56 +214,63 @@ function NotesPage() {
     }
   }
 
-  async function handleToggleComplete(noteId) {
-    try {
-      setActionLoading(true);
-      setError("");
+async function handleToggleComplete(noteId) {
+  const noteToUpdate = notes.find(
+    (note) => note._id === noteId
+  );
 
-      const noteToUpdate = notes.find((note) => note._id === noteId);
-
-      if (!noteToUpdate) {
-        const message="Note not found";
-        setError("Note not found");
-        showErrorToast(message);
-        return;
-      }
-
-      const result = await noteService.updateNote(noteId, {
-        title: noteToUpdate.title,
-        content: noteToUpdate.content,
-        completed: !noteToUpdate.completed,
-      });
-
-      const savedNote = extractNote(result);
-
-      if (!savedNote) {
-        const message="Note updated but response format was unexpected";
-        setError(message);
-        showErrorToast(message)
-        return;
-      }
-
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note._id === savedNote._id ? savedNote : note
-        )
-      );
-
-      showSuccessToast(
-      savedNote.completed
-        ? "Note marked as completed"
-        : "Note marked as pending"
-    );
-    } catch (error) {
-      if (handleUnauthorized(error)) return;
-
-      const message=getErrorMessage(error, "Failed to update note status");
-      setError(message);
-      showErrorToast(message);
-    } finally {
-      setActionLoading(false);
-    }
+  if (!noteToUpdate) {
+    const message = "Note not found";
+    setError(message);
+    showErrorToast(message);
+    return;
   }
+
+  const previousNotes = notes;
+  const newCompleted = !noteToUpdate.completed;
+
+  // Optimistic update
+  setNotes((prevNotes) =>
+    prevNotes.map((note) =>
+      note._id === noteId
+        ? {
+            ...note,
+            completed: newCompleted,
+          }
+        : note
+    )
+  );
+
+  try {
+    setError("");
+
+    const result = await noteService.updateNote(noteId, {
+      title: noteToUpdate.title,
+      content: noteToUpdate.content,
+      completed: newCompleted,
+    });
+
+    showSuccessToast(
+      result.message ||
+        (newCompleted
+          ? "Note marked as completed"
+          : "Note marked as pending")
+    );
+  } catch (error) {
+    // Rollback
+    setNotes(previousNotes);
+
+    if (handleUnauthorized(error)) return;
+
+    const message = getErrorMessage(
+      error,
+      "Failed to update note status"
+    );
+
+    setError(message);
+    showErrorToast(message);
+  }
+}
 
   const handleStartEdit = useCallback((note) => {
     setEditingNote(note);
