@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import RegisterForm from "../components/auth/RegisterForm";
 import ErrorMessage from "../components/common/ErrorMessage";
@@ -11,8 +12,7 @@ import { showSuccessToast, showErrorToast } from "../utils/toast";
 function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   async function handleRegister(formData) {
     try {
@@ -20,13 +20,11 @@ function RegisterPage() {
       setError("");
 
       const result=await authService.register(formData);
-      showSuccessToast(result.message || "Account created successfully. Please login.");
+      setRegisteredEmail(formData.email);
 
-      navigate("/login",{
-        state:{
-          message:"Registration successful. Please login.",
-        }
-      })
+      showSuccessToast(result.message || "Registration successful");
+
+      
     } catch (error) {
       const message=getErrorMessage(error, "Registration failed");
       setError(message);
@@ -38,14 +36,43 @@ function RegisterPage() {
 
   return (
     <div>
-      <h1>Register</h1>
+      {registeredEmail ? (
+  <div>
+    <h1>Check Your Email</h1>
 
-      <ErrorMessage message={error} />
+    <p>
+      We sent a verification link to:
+    </p>
 
-      <RegisterForm
-        onRegister={handleRegister}
-        loading={loading}
-      />
+    <strong>{registeredEmail}</strong>
+
+    <p>
+      Please check your inbox and click the
+      verification link to verify your account.
+    </p>
+
+    <p>
+      Didn't receive the email?
+    </p>
+
+    <Link to="/resend-verification">
+      Resend Verification Email
+    </Link>
+
+    <p>
+      Already verified?
+    </p>
+
+    <Link to="/login">
+      Go to Login
+    </Link>
+  </div>
+) : (
+  <RegisterForm
+    onRegister={handleRegister}
+    loading={loading}
+  />
+)}
     </div>
   );
 }

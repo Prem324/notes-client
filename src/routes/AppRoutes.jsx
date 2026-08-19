@@ -8,9 +8,12 @@ import PublicOnlyRoute from "./PublicOnlyRoute";
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const LoginPage = React.lazy(() => import("../pages/LoginPage"));
 const RegisterPage = React.lazy(() => import("../pages/RegisterPage"));
+const VerifyEmailPage = React.lazy(() => import("../pages/VerifyEmailPage"));
+const ResendVerificationPage = React.lazy(() => import("../pages/ResendVerificationPage"));
 const NotesPage = React.lazy(() => import("../pages/NotesPage"));
 const NoteDetailsPage = React.lazy(() => import("../pages/NoteDetailsPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
+
 const NotFoundPage = React.lazy(() => import("../pages/NotFoundPage"));
 
 
@@ -37,6 +40,19 @@ function AppRoutes() {
               <RegisterPage />
             </PublicOnlyRoute>
           }
+        />
+
+        <Route
+        path="/verify-email/:token"
+        element={
+        <VerifyEmailPage />
+        }
+        />
+
+        <Route
+        path="/resend-verification"
+        element={
+        <ResendVerificationPage />}
         />
 
         <Route
