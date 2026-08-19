@@ -26,9 +26,29 @@ async function resendVerificationEmail(email) {
 
   return response.data;
 }
+
+async function forgotPassword(email) {
+  const response = await axiosInstance.post(
+    "/auth/forgot-password",
+    { email }
+  );
+
+  return response.data;
+}
+
+async function resetPassword(token, password) {
+  const response = await axiosInstance.post(
+    `/auth/reset-password/${token}`,
+    { password }
+  );
+
+  return response.data;
+}
 export const authService = {
     register,
     login,
     verifyEmail,
-    resendVerificationEmail
-};
+    resendVerificationEmail,
+    forgotPassword,
+    resetPassword
+  };

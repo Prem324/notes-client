@@ -10,6 +10,8 @@ const LoginPage = React.lazy(() => import("../pages/LoginPage"));
 const RegisterPage = React.lazy(() => import("../pages/RegisterPage"));
 const VerifyEmailPage = React.lazy(() => import("../pages/VerifyEmailPage"));
 const ResendVerificationPage = React.lazy(() => import("../pages/ResendVerificationPage"));
+const ForgotPasswordPage = React.lazy(() => import("../pages/ForgotPasswordPage"));
+const ResetPasswordPage = React.lazy(() => import("../pages/ResetPasswordPage"));
 const NotesPage = React.lazy(() => import("../pages/NotesPage"));
 const NoteDetailsPage = React.lazy(() => import("../pages/NoteDetailsPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
@@ -53,6 +55,20 @@ function AppRoutes() {
         path="/resend-verification"
         element={
         <ResendVerificationPage />}
+        />
+
+        <Route
+        path="/forgot-password"
+        element={
+        <ForgotPasswordPage />
+        }
+        />
+
+        <Route
+        path="/reset-password/:token"
+        element={
+        <ResetPasswordPage />
+        }
         />
 
         <Route

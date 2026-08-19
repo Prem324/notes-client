@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation,useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import LoginForm from "../components/auth/LoginForm";
 import ErrorMessage from "../components/common/ErrorMessage";
@@ -50,6 +51,12 @@ function LoginPage() {
       <ErrorMessage message={error} />
 
       <LoginForm onLogin={handleLogin} loading={loading} />
+      <p>
+        Forgot your password?{" "}
+        <Link to="/forgot-password">
+        Reset it
+        </Link>
+      </p>
     </div>
   );
 }
