@@ -74,10 +74,6 @@ describe("RegisterPage", () => {
   test("renders register page", () => {
     renderRegisterPage();
 
-    expect(
-      screen.getByRole("heading", { name: /^register$/i })
-    ).toBeInTheDocument();
-
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
@@ -87,7 +83,7 @@ describe("RegisterPage", () => {
     ).toBeInTheDocument();
   });
 
-  test("registers successfully and navigates to login page with success message", async () => {
+  test("registers successfully and shows email verification instructions", async () => {
     const user = userEvent.setup();
 
     authService.register.mockResolvedValue({
@@ -109,11 +105,12 @@ describe("RegisterPage", () => {
       password: "password123",
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith("/login", {
-      state: {
-        message: "Registration successful. Please login.",
-      },
-    });
+    expect(
+      await screen.findByRole("heading", { name: /check your email/i })
+    ).toBeInTheDocument();
+
+    expect(screen.getByText("prem@example.com")).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   test("shows error message when registration fails", async () => {

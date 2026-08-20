@@ -38,7 +38,7 @@ function NoteForm({
     }
   }, [editingNote, reset]);
 
-  function handleFormSubmit(data) {
+  async function handleFormSubmit(data) {
     const title = data.title.trim();
     const content = data.content.trim();
 
@@ -49,10 +49,14 @@ function NoteForm({
         content,
       });
     } else {
-      onAddNote({
+      await onAddNote({
         title,
         content,
         completed: false,
+      });
+      reset({
+        title: "",
+        content: "",
       });
     }
   }

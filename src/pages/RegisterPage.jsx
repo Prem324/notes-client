@@ -36,6 +36,7 @@ function RegisterPage() {
 
   return (
     <div>
+      <ErrorMessage message={error} />
       {registeredEmail ? (
   <div>
     <h1>Check Your Email</h1>
