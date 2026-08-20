@@ -10,6 +10,22 @@ async function login(loginData) {
     return response.data;
 }
 
+async function refresh() {
+  const response = await axiosInstance.post(
+    "/auth/refresh"
+  );
+
+  return response.data;
+}
+
+async function logout() {
+  const response = await axiosInstance.post(
+    "/auth/logout"
+  );
+
+  return response.data;
+}
+
 async function verifyEmail(token) {
   const response = await axiosInstance.get(
     `/auth/verify-email/${token}`
@@ -47,6 +63,8 @@ async function resetPassword(token, password) {
 export const authService = {
     register,
     login,
+    refresh,
+    logout,
     verifyEmail,
     resendVerificationEmail,
     forgotPassword,

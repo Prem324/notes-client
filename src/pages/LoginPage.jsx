@@ -27,7 +27,7 @@ function LoginPage() {
 
       const result = await authService.login(formData);
 
-      login(result.data.token);
+      login(result.data.accessToken);
 
       showSuccessToast(result.message || "Login successful");
 
