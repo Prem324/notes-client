@@ -4,6 +4,8 @@ import { Routes, Route } from "react-router-dom";
 import Loader from "../components/common/Loader";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
+import AdminRoute from "../components/auth/AdminRoute";
+import AdminDashboardPage from "../pages/AdminDashboardPage";
 
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const LoginPage = React.lazy(() => import("../pages/LoginPage"));
@@ -25,6 +27,13 @@ function AppRoutes() {
     <Suspense fallback={<Loader message="Loading page..." />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        
+        <Route element={<AdminRoute />}>
+        <Route
+        path="/admin"
+        element={<AdminDashboardPage />}
+        />
+        </Route>
 
         <Route
           path="/login"
@@ -68,6 +77,15 @@ function AppRoutes() {
         path="/reset-password/:token"
         element={
         <ResetPasswordPage />
+        }
+        />
+
+        <Route
+        path="/admin"
+        element={
+        <AdminRoute>
+          <AdminDashboardPage />
+          </AdminRoute>
         }
         />
 

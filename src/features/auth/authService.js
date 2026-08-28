@@ -18,6 +18,14 @@ async function refresh() {
   return response.data;
 }
 
+async function getProfile() {
+    const response = await axiosInstance.get(
+        "/auth/profile"
+    );
+
+    return response.data;
+}
+
 async function logout() {
   const response = await axiosInstance.post(
     "/auth/logout"
@@ -64,6 +72,7 @@ export const authService = {
     register,
     login,
     refresh,
+    getProfile,
     logout,
     verifyEmail,
     resendVerificationEmail,

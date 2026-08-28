@@ -21,10 +21,16 @@ export function AuthProvider({ children }) {
         getToken()
     );
 
+    const [user, setUser] = useState(null);
+
     const [loading, setLoading] = useState(true);
 
     const isLoggedIn = Boolean(token);
 
+
+    // ================================
+    // Restore Authentication
+    // ================================
 
     useEffect(() => {
 
@@ -35,18 +41,29 @@ export function AuthProvider({ children }) {
                 const existingToken = getToken();
 
                 /*
-                 * If we already have an access token,
-                 * don't unnecessarily refresh immediately.
+                 * Access token already exists.
+                 *
+                 * We still fetch the profile so
+                 * that we know the user's role.
                  */
                 if (existingToken) {
+
+                    setToken(existingToken);
+
+                    const result =
+                        await authService.getProfile();
+
+                    setUser(result.user);
+
                     return;
                 }
+
 
                 /*
                  * No access token.
                  *
-                 * Try to get a new one using the
-                 * httpOnly refresh-token cookie.
+                 * Try to get a new access token
+                 * using the httpOnly refresh cookie.
                  */
                 const result =
                     await authService.refresh();
@@ -58,15 +75,26 @@ export function AuthProvider({ children }) {
 
                 setToken(newAccessToken);
 
+
+                /*
+                 * Get authenticated user's
+                 * information and role.
+                 */
+                const profileResult =
+                    await authService.getProfile();
+
+                setUser(profileResult.user);
+
             } catch (error) {
 
                 /*
-                 * No valid refresh token.
-                 *
-                 * User simply remains logged out.
+                 * No valid authentication.
                  */
                 removeToken();
+
                 setToken(null);
+
+                setUser(null);
 
             } finally {
 
@@ -80,14 +108,45 @@ export function AuthProvider({ children }) {
     }, []);
 
 
-    function login(tokenValue) {
+    // ================================
+    // Login
+    // ================================
+
+    async function login(tokenValue) {
 
         saveToken(tokenValue);
 
         setToken(tokenValue);
 
+
+        /*
+         * Fetch the authenticated user's
+         * profile immediately after login.
+         */
+        try {
+
+            const result =
+                await authService.getProfile();
+
+            setUser(result.user);
+
+        } catch (error) {
+
+            removeToken();
+
+            setToken(null);
+
+            setUser(null);
+
+            throw error;
+        }
+
     }
 
+
+    // ================================
+    // Logout
+    // ================================
 
     async function logout() {
 
@@ -108,13 +167,20 @@ export function AuthProvider({ children }) {
 
             setToken(null);
 
+            setUser(null);
+
         }
 
     }
 
 
+    // ================================
+    // Context Value
+    // ================================
+
     const value = {
         token,
+        user,
         isLoggedIn,
         loading,
         login,
