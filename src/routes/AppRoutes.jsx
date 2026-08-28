@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
 import AdminRoute from "../components/auth/AdminRoute";
 import AdminDashboardPage from "../pages/AdminDashboardPage";
+import AuditLogsPage from "../pages/AuditLogsPage";
 
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const LoginPage = React.lazy(() => import("../pages/LoginPage"));
@@ -34,6 +35,15 @@ function AppRoutes() {
         element={<AdminDashboardPage />}
         />
         </Route>
+
+        <Route
+    path="/admin/audit-logs"
+    element={
+        <ProtectedRoute requiredRole="admin">
+            <AuditLogsPage />
+        </ProtectedRoute>
+    }
+/>
 
         <Route
           path="/login"

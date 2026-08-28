@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { adminService } from "../features/admin/adminService";
 import ErrorMessage from "../components/common/ErrorMessage";
 import AdminUsers from "../components/admin/AdminUsers";
 import { getErrorMessage } from "../utils/getErrorMessage";
 
-import "./AdminDashboardPage.css";
+//import "./AdminDashboardPage.css";
 
 
 function AdminDashboardPage() {
@@ -68,6 +69,14 @@ function AdminDashboardPage() {
                     Manage users and monitor
                     application statistics.
                 </p>
+
+                {/* Admin Navigation */}
+                <Link
+                    to="/admin/audit-logs"
+                    className="admin-audit-link"
+                >
+                    Audit Logs
+                </Link>
 
             </header>
 
@@ -136,7 +145,6 @@ function AdminDashboardPage() {
 
 
             <AdminUsers />
-            
 
         </main>
     );

@@ -3,7 +3,7 @@ import { useAuth } from "../../features/auth/AuthContext";
 import Button from "../common/Button";
 
 function Navbar() {
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -23,15 +23,26 @@ function Navbar() {
         {isLoggedIn ? (
           <>
             <Link to="/notes">Notes</Link>
+
             <Link to="/profile">Profile</Link>
 
-            <Button type="button" onClick={handleLogout}>
+            {user?.role === "admin" && (
+              <Link to="/admin">
+                Admin
+              </Link>
+            )}
+
+            <Button
+              type="button"
+              onClick={handleLogout}
+            >
               Logout
             </Button>
           </>
         ) : (
           <>
             <Link to="/login">Login</Link>
+
             <Link to="/register">Register</Link>
           </>
         )}
