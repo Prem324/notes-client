@@ -109,7 +109,7 @@ describe("LoginPage", () => {
 
     authService.login.mockResolvedValue({
       data: {
-        token: "fake-token",
+        accessToken: "fake-token",
       },
     });
 
