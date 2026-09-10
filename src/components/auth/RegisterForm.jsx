@@ -21,7 +21,7 @@ function RegisterForm({ onRegister, loading = false }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
+    <form noValidate onSubmit={handleSubmit(handleFormSubmit)}>
       <h2>Create Account</h2>
 
       <Input

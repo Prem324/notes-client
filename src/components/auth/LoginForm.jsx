@@ -20,7 +20,7 @@ function LoginForm({ onLogin, loading = false }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)}>
+    <form noValidate onSubmit={handleSubmit(handleFormSubmit)}>
       <h2>Login</h2>
 
       <Input
