@@ -7,6 +7,7 @@ import PublicOnlyRoute from "./PublicOnlyRoute";
 import AdminRoute from "../components/auth/AdminRoute";
 import AdminDashboardPage from "../pages/AdminDashboardPage";
 import AuditLogsPage from "../pages/AuditLogsPage";
+import TagsPage from "../pages/TagsPage";
 
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const LoginPage = React.lazy(() => import("../pages/LoginPage"));
@@ -18,6 +19,7 @@ const ResetPasswordPage = React.lazy(() => import("../pages/ResetPasswordPage"))
 const NotesPage = React.lazy(() => import("../pages/NotesPage"));
 const NoteDetailsPage = React.lazy(() => import("../pages/NoteDetailsPage"));
 const ProfilePage = React.lazy(() => import("../pages/ProfilePage"));
+
 
 const NotFoundPage = React.lazy(() => import("../pages/NotFoundPage"));
 
@@ -122,6 +124,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tags"
+          element={
+            <ProtectedRoute>
+              <TagsPage />
             </ProtectedRoute>
           }
         />

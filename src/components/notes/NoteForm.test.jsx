@@ -1,15 +1,81 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test, vi } from "vitest";
+import { useFeatureFlags } from "../../features/featureFlags/useFeatureFlags";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+import { useTags } from "../../features/tags/useTags";
+
+vi.mock("../../features/tags/useTags", () => ({
+  useTags: vi.fn(),
+}));
 
 import NoteForm from "./NoteForm";
 
+vi.mock("../../features/featureFlags/useFeatureFlags", () => ({
+  useFeatureFlags: vi.fn(),
+}));
+
+beforeEach(() => {
+  useFeatureFlags.mockReturnValue({
+    isEnabled: (feature) => feature === "tags",
+  });
+});
+function renderWithQueryClient(ui) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      {ui}
+    </QueryClientProvider>
+  );
+}
+
 describe("NoteForm", () => {
+
+  beforeEach(() => {
+  useTags.mockReturnValue({
+    data: {
+      data: [
+        {
+          _id: "tag-1",
+          name: "React",
+        },
+        {
+          _id: "tag-2",
+          name: "MERN",
+        },
+        {
+          _id: "tag-3",
+          name: "JavaScript",
+        },
+      ],
+    },
+    isLoading: false,
+    isError: false,
+  });
+
+  useFeatureFlags.mockReturnValue({
+    isEnabled: (feature) => feature === "tags",
+  });
+}); 
+
   test("shows validation error when title is empty", async () => {
     const user = userEvent.setup();
     const onAddNote = vi.fn();
 
-    render(<NoteForm onAddNote={onAddNote} />);
+    renderWithQueryClient(
+      <NoteForm onAddNote={onAddNote} />
+    );
 
     await user.type(
       screen.getByPlaceholderText(/enter content/i),
@@ -17,10 +83,15 @@ describe("NoteForm", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /create note/i })
+      screen.getByRole("button", {
+        name: /create note/i,
+      })
     );
 
-    expect(screen.getByText(/title is required/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/title is required/i)
+    ).toBeInTheDocument();
+
     expect(onAddNote).not.toHaveBeenCalled();
   });
 
@@ -28,9 +99,14 @@ describe("NoteForm", () => {
     const user = userEvent.setup();
     const onAddNote = vi.fn();
 
-    render(<NoteForm onAddNote={onAddNote} />);
+    renderWithQueryClient(
+      <NoteForm onAddNote={onAddNote} />
+    );
 
-    await user.type(screen.getByLabelText(/title/i), "Hi");
+    await user.type(
+      screen.getByLabelText(/title/i),
+      "Hi"
+    );
 
     await user.type(
       screen.getByPlaceholderText(/enter content/i),
@@ -38,11 +114,15 @@ describe("NoteForm", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /create note/i })
+      screen.getByRole("button", {
+        name: /create note/i,
+      })
     );
 
     expect(
-      screen.getByText(/title must be at least 3 characters/i)
+      screen.getByText(
+        /title must be at least 3 characters/i
+      )
     ).toBeInTheDocument();
 
     expect(onAddNote).not.toHaveBeenCalled();
@@ -52,11 +132,16 @@ describe("NoteForm", () => {
     const user = userEvent.setup();
     const onAddNote = vi.fn();
 
-    render(<NoteForm onAddNote={onAddNote} />);
+    renderWithQueryClient(
+      <NoteForm onAddNote={onAddNote} />
+    );
 
     const longTitle = "A".repeat(101);
 
-    await user.type(screen.getByLabelText(/title/i), longTitle);
+    await user.type(
+      screen.getByLabelText(/title/i),
+      longTitle
+    );
 
     await user.type(
       screen.getByPlaceholderText(/enter content/i),
@@ -64,11 +149,15 @@ describe("NoteForm", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /create note/i })
+      screen.getByRole("button", {
+        name: /create note/i,
+      })
     );
 
     expect(
-      screen.getByText(/title must be less than 100 characters/i)
+      screen.getByText(
+        /title must be less than 100 characters/i
+      )
     ).toBeInTheDocument();
 
     expect(onAddNote).not.toHaveBeenCalled();
@@ -78,15 +167,25 @@ describe("NoteForm", () => {
     const user = userEvent.setup();
     const onAddNote = vi.fn();
 
-    render(<NoteForm onAddNote={onAddNote} />);
-
-    await user.type(screen.getByLabelText(/title/i), "Valid title");
-
-    await user.click(
-      screen.getByRole("button", { name: /create note/i })
+    renderWithQueryClient(
+      <NoteForm onAddNote={onAddNote} />
     );
 
-    expect(screen.getByText(/content is required/i)).toBeInTheDocument();
+    await user.type(
+      screen.getByLabelText(/title/i),
+      "Valid title"
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /create note/i,
+      })
+    );
+
+    expect(
+      screen.getByText(/content is required/i)
+    ).toBeInTheDocument();
+
     expect(onAddNote).not.toHaveBeenCalled();
   });
 
@@ -94,9 +193,14 @@ describe("NoteForm", () => {
     const user = userEvent.setup();
     const onAddNote = vi.fn();
 
-    render(<NoteForm onAddNote={onAddNote} />);
+    renderWithQueryClient(
+      <NoteForm onAddNote={onAddNote} />
+    );
 
-    await user.type(screen.getByLabelText(/title/i), "React Note");
+    await user.type(
+      screen.getByLabelText(/title/i),
+      "React Note"
+    );
 
     await user.type(
       screen.getByPlaceholderText(/enter content/i),
@@ -104,13 +208,16 @@ describe("NoteForm", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /create note/i })
+      screen.getByRole("button", {
+        name: /create note/i,
+      })
     );
 
     expect(onAddNote).toHaveBeenCalledWith({
       title: "React Note",
       content: "React content",
       completed: false,
+      tags: [],
     });
 
     expect(onAddNote).toHaveBeenCalledTimes(1);
@@ -120,16 +227,29 @@ describe("NoteForm", () => {
     const user = userEvent.setup();
     const onAddNote = vi.fn();
 
-    render(<NoteForm onAddNote={onAddNote} />);
+    renderWithQueryClient(
+      <NoteForm onAddNote={onAddNote} />
+    );
 
     const titleInput = screen.getByLabelText(/title/i);
-    const contentTextarea = screen.getByPlaceholderText(/enter content/i);
 
-    await user.type(titleInput, "React Note");
-    await user.type(contentTextarea, "React content");
+    const contentTextarea =
+      screen.getByPlaceholderText(/enter content/i);
+
+    await user.type(
+      titleInput,
+      "React Note"
+    );
+
+    await user.type(
+      contentTextarea,
+      "React content"
+    );
 
     await user.click(
-      screen.getByRole("button", { name: /create note/i })
+      screen.getByRole("button", {
+        name: /create note/i,
+      })
     );
 
     expect(titleInput).toHaveValue("");
@@ -144,7 +264,7 @@ describe("NoteForm", () => {
       completed: false,
     };
 
-    render(
+    renderWithQueryClient(
       <NoteForm
         onAddNote={() => {}}
         editingNote={editingNote}
@@ -154,19 +274,30 @@ describe("NoteForm", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /edit note/i })
+      screen.getByRole("heading", {
+        name: /edit note/i,
+      })
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /update note/i })
+      screen.getByRole("button", {
+        name: /update note/i,
+      })
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /cancel/i })
+      screen.getByRole("button", {
+        name: /cancel/i,
+      })
     ).toBeInTheDocument();
 
-    expect(screen.getByDisplayValue(/old title/i)).toBeInTheDocument();
-    expect(screen.getByDisplayValue(/old content/i)).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue(/old title/i)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue(/old content/i)
+    ).toBeInTheDocument();
   });
 
   test("calls onUpdateNote with edited note data", async () => {
@@ -180,7 +311,7 @@ describe("NoteForm", () => {
       completed: true,
     };
 
-    render(
+    renderWithQueryClient(
       <NoteForm
         onAddNote={() => {}}
         editingNote={editingNote}
@@ -189,23 +320,35 @@ describe("NoteForm", () => {
       />
     );
 
-    const titleInput = screen.getByLabelText(/title/i);
-    const contentTextarea = screen.getByPlaceholderText(/enter content/i);
+    const titleInput =
+      screen.getByLabelText(/title/i);
+
+    const contentTextarea =
+      screen.getByPlaceholderText(/enter content/i);
 
     await user.clear(titleInput);
-    await user.type(titleInput, "Updated title");
+    await user.type(
+      titleInput,
+      "Updated title"
+    );
 
     await user.clear(contentTextarea);
-    await user.type(contentTextarea, "Updated content");
+    await user.type(
+      contentTextarea,
+      "Updated content"
+    );
 
     await user.click(
-      screen.getByRole("button", { name: /update note/i })
+      screen.getByRole("button", {
+        name: /update note/i,
+      })
     );
 
     expect(onUpdateNote).toHaveBeenCalledWith({
       ...editingNote,
       title: "Updated title",
       content: "Updated content",
+      tags: [],
     });
 
     expect(onUpdateNote).toHaveBeenCalledTimes(1);
@@ -222,7 +365,7 @@ describe("NoteForm", () => {
       completed: false,
     };
 
-    render(
+    renderWithQueryClient(
       <NoteForm
         onAddNote={() => {}}
         editingNote={editingNote}
@@ -231,16 +374,27 @@ describe("NoteForm", () => {
       />
     );
 
-    await user.click(screen.getByRole("button", { name: /cancel/i }));
+    await user.click(
+      screen.getByRole("button", {
+        name: /cancel/i,
+      })
+    );
 
     expect(onCancelEdit).toHaveBeenCalledTimes(1);
   });
 
   test("disables submit button when loading in create mode", () => {
-    render(<NoteForm onAddNote={() => {}} loading={true} />);
+    renderWithQueryClient(
+      <NoteForm
+        onAddNote={() => {}}
+        loading={true}
+      />
+    );
 
     expect(
-      screen.getByRole("button", { name: /creating/i })
+      screen.getByRole("button", {
+        name: /creating/i,
+      })
     ).toBeDisabled();
   });
 
@@ -252,7 +406,7 @@ describe("NoteForm", () => {
       completed: false,
     };
 
-    render(
+    renderWithQueryClient(
       <NoteForm
         onAddNote={() => {}}
         editingNote={editingNote}
@@ -263,7 +417,319 @@ describe("NoteForm", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /updating/i })
+      screen.getByRole("button", {
+        name: /updating/i,
+      })
     ).toBeDisabled();
   });
+
+  test("submits selected tag when creating a note", async () => {
+  const user = userEvent.setup();
+
+  const onAddNote = vi.fn().mockResolvedValue(undefined);
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={onAddNote}
+      editingNote={null}
+      onUpdateNote={vi.fn()}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  await user.type(
+    screen.getByLabelText(/title/i),
+    "React Notes"
+  );
+
+  await user.type(
+    screen.getByLabelText(/content/i),
+    "Learning React"
+  );
+
+  await user.selectOptions(
+    screen.getByLabelText(/tags/i),
+    "tag-1"
+  );
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /create note/i,
+    })
+  );
+
+  expect(onAddNote).toHaveBeenCalledWith({
+    title: "React Notes",
+    content: "Learning React",
+    completed: false,
+    tags: ["tag-1"],
+  });
+});
+
+test("submits multiple selected tags when creating a note", async () => {
+  const user = userEvent.setup();
+
+  const onAddNote = vi.fn().mockResolvedValue(undefined);
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={onAddNote}
+      editingNote={null}
+      onUpdateNote={vi.fn()}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  await user.type(
+    screen.getByLabelText(/title/i),
+    "MERN Notes"
+  );
+
+  await user.type(
+    screen.getByLabelText(/content/i),
+    "Learning MERN"
+  );
+
+  await user.selectOptions(
+    screen.getByLabelText(/tags/i),
+    ["tag-1", "tag-2"]
+  );
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /create note/i,
+    })
+  );
+
+  expect(onAddNote).toHaveBeenCalledWith({
+    title: "MERN Notes",
+    content: "Learning MERN",
+    completed: false,
+    tags: ["tag-1", "tag-2"],
+  });
+});
+
+test("selects existing tags when editing a note", () => {
+  const editingNote = {
+    _id: "note-1",
+    title: "React Notes",
+    content: "Learning React",
+    completed: false,
+    tags: [
+      {
+        _id: "tag-1",
+        name: "React",
+      },
+      {
+        _id: "tag-2",
+        name: "MERN",
+      },
+    ],
+  };
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={vi.fn()}
+      editingNote={editingNote}
+      onUpdateNote={vi.fn()}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  const select = screen.getByLabelText(/tags/i);
+
+  expect(
+  screen.getByRole("option", { name: "React" }).selected
+).toBe(true);
+
+expect(
+  screen.getByRole("option", { name: "MERN" }).selected
+).toBe(true);
+
+expect(
+  screen.getByRole("option", { name: "JavaScript" }).selected
+).toBe(false);
+
+  expect(select).toHaveAttribute("multiple");
+});
+
+test("submits updated tags when editing a note", async () => {
+  const user = userEvent.setup();
+
+  const onUpdateNote = vi.fn();
+
+  const editingNote = {
+    _id: "note-1",
+    title: "React Notes",
+    content: "Learning React",
+    completed: false,
+    tags: [
+      {
+        _id: "tag-1",
+        name: "React",
+      },
+    ],
+  };
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={vi.fn()}
+      editingNote={editingNote}
+      onUpdateNote={onUpdateNote}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  const select = screen.getByLabelText(/tags/i);
+
+  await user.deselectOptions(select, "tag-1");
+
+  await user.selectOptions(select, [
+    "tag-2",
+    "tag-3",
+  ]);
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /update note/i,
+    })
+  );
+
+  expect(onUpdateNote).toHaveBeenCalledWith({
+    ...editingNote,
+    tags: ["tag-2", "tag-3"],
+  });
+});
+
+test("submits an empty tag array when all tags are removed", async () => {
+  const user = userEvent.setup();
+
+  const onUpdateNote = vi.fn();
+
+  const editingNote = {
+    _id: "note-1",
+    title: "React Notes",
+    content: "Learning React",
+    completed: false,
+    tags: [
+      {
+        _id: "tag-1",
+        name: "React",
+      },
+    ],
+  };
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={vi.fn()}
+      editingNote={editingNote}
+      onUpdateNote={onUpdateNote}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  const select = screen.getByLabelText(/tags/i);
+
+  await user.deselectOptions(select, "tag-1");
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /update note/i,
+    })
+  );
+
+  expect(onUpdateNote).toHaveBeenCalledWith({
+    ...editingNote,
+    tags: [],
+  });
+});
+
+test("does not send tags when tags feature is disabled during create", async () => {
+  const user = userEvent.setup();
+
+  useFeatureFlags.mockReturnValue({
+    isEnabled: () => false,
+  });
+
+  const onAddNote = vi.fn().mockResolvedValue(undefined);
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={onAddNote}
+      editingNote={null}
+      onUpdateNote={vi.fn()}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  await user.type(
+    screen.getByLabelText(/title/i),
+    "React Notes"
+  );
+
+  await user.type(
+    screen.getByLabelText(/content/i),
+    "Learning React"
+  );
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /create note/i,
+    })
+  );
+
+  expect(onAddNote).toHaveBeenCalledWith({
+    title: "React Notes",
+    content: "Learning React",
+    completed: false,
+  });
+});
+
+test("preserves existing tags when tags feature is disabled during edit", async () => {
+  const user = userEvent.setup();
+
+  useFeatureFlags.mockReturnValue({
+    isEnabled: () => false,
+  });
+
+  const onUpdateNote = vi.fn();
+
+  const editingNote = {
+    _id: "note-1",
+    title: "React Notes",
+    content: "Learning React",
+    completed: false,
+    tags: [
+      {
+        _id: "tag-1",
+        name: "React",
+      },
+      {
+        _id: "tag-2",
+        name: "MERN",
+      },
+    ],
+  };
+
+  renderWithQueryClient(
+    <NoteForm
+      onAddNote={vi.fn()}
+      editingNote={editingNote}
+      onUpdateNote={onUpdateNote}
+      onCancelEdit={vi.fn()}
+    />
+  );
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /update note/i,
+    })
+  );
+
+  expect(onUpdateNote).toHaveBeenCalledWith({
+    ...editingNote,
+    title: "React Notes",
+    content: "Learning React",
+  });
+});
 });

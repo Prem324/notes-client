@@ -5,6 +5,11 @@ import Button from "../common/Button";
 import Input from "../common/Input";
 import Textarea from "../common/Textarea";
 
+import FeatureGate from "../../features/featureFlags/FeatureGate";
+import { useFeatureFlags } from "../../features/featureFlags/useFeatureFlags";
+
+import NoteTagSelector from "../tags/NoteTagSelector";
+
 function NoteForm({
   onAddNote,
   editingNote,
@@ -21,19 +26,29 @@ function NoteForm({
     defaultValues: {
       title: "",
       content: "",
+      tags: [],
     },
   });
+
+  const { isEnabled } = useFeatureFlags();
+
+  const tagsEnabled = isEnabled("tags");
 
   useEffect(() => {
     if (editingNote) {
       reset({
         title: editingNote.title,
         content: editingNote.content,
+        tags:
+          editingNote.tags?.map((tag) =>
+            typeof tag === "string" ? tag : tag._id
+          ) ?? [],
       });
     } else {
       reset({
         title: "",
         content: "",
+        tags: [],
       });
     }
   }, [editingNote, reset]);
@@ -43,22 +58,40 @@ function NoteForm({
     const content = data.content.trim();
 
     if (editingNote) {
-      onUpdateNote({
+      const updatedNote = {
         ...editingNote,
         title,
         content,
-      });
-    } else {
-      await onAddNote({
-        title,
-        content,
-        completed: false,
-      });
-      reset({
-        title: "",
-        content: "",
-      });
+      };
+
+      // Only modify tags when the feature is enabled.
+      // Otherwise existing tags are preserved.
+      if (tagsEnabled) {
+        updatedNote.tags = data.tags ?? [];
+      }
+
+      onUpdateNote(updatedNote);
+      return;
     }
+
+    const newNote = {
+      title,
+      content,
+      completed: false,
+    };
+
+    // Only send tags when the Tags feature is enabled.
+    if (tagsEnabled) {
+      newNote.tags = data.tags ?? [];
+    }
+
+    await onAddNote(newNote);
+
+    reset({
+      title: "",
+      content: "",
+      tags: [],
+    });
   }
 
   return (
@@ -86,7 +119,9 @@ function NoteForm({
       />
 
       {errors.title && (
-        <p className="field-error">{errors.title.message}</p>
+        <p className="field-error">
+          {errors.title.message}
+        </p>
       )}
 
       <Textarea
@@ -102,8 +137,14 @@ function NoteForm({
       />
 
       {errors.content && (
-        <p className="field-error">{errors.content.message}</p>
+        <p className="field-error">
+          {errors.content.message}
+        </p>
       )}
+
+      <FeatureGate feature="tags">
+        <NoteTagSelector register={register} />
+      </FeatureGate>
 
       <Button type="submit" disabled={loading}>
         {loading
