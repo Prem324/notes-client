@@ -8,6 +8,7 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import NoteSearch from "../components/notes/NoteSearch";
 import Pagination from "../components/common/Pagination";
 
+
 import { noteService } from "../features/notes/noteService";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { useAuth } from "../features/auth/AuthContext";
@@ -336,6 +337,7 @@ async function handleToggleComplete(noteId) {
   const handleNextPage = useCallback(() => {
     setPage((prevPage) => prevPage + 1);
   }, []);
+
 
   return (
     <div>
