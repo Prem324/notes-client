@@ -9,6 +9,7 @@ import FeatureGate from "../../features/featureFlags/FeatureGate";
 import { useFeatureFlags } from "../../features/featureFlags/useFeatureFlags";
 
 import NoteTagSelector from "../tags/NoteTagSelector";
+import NoteFolderSelector from "../folders/NoteFolderSelector";
 
 function NoteForm({
   onAddNote,
@@ -27,28 +28,37 @@ function NoteForm({
       title: "",
       content: "",
       tags: [],
+      folder: "",
     },
   });
 
   const { isEnabled } = useFeatureFlags();
 
   const tagsEnabled = isEnabled("tags");
+  const foldersEnabled = isEnabled("folders");
 
   useEffect(() => {
     if (editingNote) {
       reset({
         title: editingNote.title,
         content: editingNote.content,
+
         tags:
           editingNote.tags?.map((tag) =>
             typeof tag === "string" ? tag : tag._id
           ) ?? [],
+
+        folder:
+          typeof editingNote.folder === "string"
+            ? editingNote.folder
+            : editingNote.folder?._id ?? "",
       });
     } else {
       reset({
         title: "",
         content: "",
         tags: [],
+        folder: "",
       });
     }
   }, [editingNote, reset]);
@@ -57,6 +67,9 @@ function NoteForm({
     const title = data.title.trim();
     const content = data.content.trim();
 
+    // ==========================================
+    // UPDATE EXISTING NOTE
+    // ==========================================
     if (editingNote) {
       const updatedNote = {
         ...editingNote,
@@ -64,33 +77,55 @@ function NoteForm({
         content,
       };
 
-      // Only modify tags when the feature is enabled.
-      // Otherwise existing tags are preserved.
+      // Only modify tags when Tags feature is enabled.
+      // Otherwise preserve existing tags.
       if (tagsEnabled) {
         updatedNote.tags = data.tags ?? [];
       }
 
+      // Only modify folder when Folders feature is enabled
+      // and a folder is selected.
+      //
+      // If no folder is selected, we currently preserve
+      // the existing folder. Folder removal will be handled
+      // separately at the backend/API level.
+      if (foldersEnabled && data.folder) {
+        updatedNote.folder = data.folder;
+      }
+
       onUpdateNote(updatedNote);
+
       return;
     }
 
+    // ==========================================
+    // CREATE NEW NOTE
+    // ==========================================
     const newNote = {
       title,
       content,
       completed: false,
     };
 
-    // Only send tags when the Tags feature is enabled.
+    // Only send tags when Tags feature is enabled.
     if (tagsEnabled) {
       newNote.tags = data.tags ?? [];
     }
 
+    // Only send folder when Folders feature is enabled
+    // and a folder has actually been selected.
+    if (foldersEnabled && data.folder) {
+      newNote.folder = data.folder;
+    }
+
     await onAddNote(newNote);
 
+    // Reset form after successful creation.
     reset({
       title: "",
       content: "",
       tags: [],
+      folder: "",
     });
   }
 
@@ -98,20 +133,24 @@ function NoteForm({
     <form onSubmit={handleSubmit(handleFormSubmit)}>
       <h2>{editingNote ? "Edit Note" : "Create Note"}</h2>
 
+      {/* Title */}
       <Input
         label="Title"
         type="text"
         placeholder="Enter title"
         {...register("title", {
           required: "Title is required",
+
           minLength: {
             value: 3,
             message: "Title must be at least 3 characters",
           },
+
           maxLength: {
             value: 100,
             message: "Title must be less than 100 characters",
           },
+
           validate: (value) =>
             value.trim().length > 0 ||
             "Title cannot contain only spaces",
@@ -124,12 +163,14 @@ function NoteForm({
         </p>
       )}
 
+      {/* Content */}
       <Textarea
         label="Content"
         placeholder="Enter content"
         rows={4}
         {...register("content", {
           required: "Content is required",
+
           validate: (value) =>
             value.trim().length > 0 ||
             "Content cannot contain only spaces",
@@ -142,10 +183,17 @@ function NoteForm({
         </p>
       )}
 
+      {/* Tags */}
       <FeatureGate feature="tags">
         <NoteTagSelector register={register} />
       </FeatureGate>
 
+      {/* Folders */}
+      <FeatureGate feature="folders">
+        <NoteFolderSelector register={register} />
+      </FeatureGate>
+
+      {/* Submit */}
       <Button type="submit" disabled={loading}>
         {loading
           ? editingNote
@@ -156,6 +204,7 @@ function NoteForm({
           : "Create Note"}
       </Button>
 
+      {/* Cancel Edit */}
       {editingNote && (
         <Button
           type="button"

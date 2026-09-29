@@ -8,6 +8,7 @@ import AdminRoute from "../components/auth/AdminRoute";
 import AdminDashboardPage from "../pages/AdminDashboardPage";
 import AuditLogsPage from "../pages/AuditLogsPage";
 import TagsPage from "../pages/TagsPage";
+import FoldersPage from "../pages/FoldersPage";
 
 const HomePage = React.lazy(() => import("../pages/HomePage"));
 const LoginPage = React.lazy(() => import("../pages/LoginPage"));
@@ -133,6 +134,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <TagsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/folders"
+          element={
+            <ProtectedRoute>
+              <FoldersPage />
             </ProtectedRoute>
           }
         />
