@@ -1,11 +1,13 @@
 import axiosInstance from "../../api/axiosInstance";
 
-async function getNotes({page=1,limit=10,search=""}={}) {
+async function getNotes({page=1,limit=10,search="",tag="",folder=""}={}) {
     const response=await axiosInstance.get("/notes",{
         params:{
             page,
             limit,
             search,
+            tag,
+            folder
         },
     });
     return response.data;

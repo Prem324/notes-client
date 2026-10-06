@@ -36,6 +36,8 @@ describe("noteService", () => {
       page: 2,
       limit: 5,
       search: "react",
+      tag:"tag-1",
+      folder:"folder-1",
     });
 
     expect(axiosInstance.get).toHaveBeenCalledWith("/notes", {
@@ -43,6 +45,8 @@ describe("noteService", () => {
         page: 2,
         limit: 5,
         search: "react",
+        tag:"tag-1",
+        folder:"folder-1",
       },
     });
 

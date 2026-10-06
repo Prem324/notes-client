@@ -7,7 +7,12 @@ import Loader from "../components/common/Loader";
 import ErrorMessage from "../components/common/ErrorMessage";
 import NoteSearch from "../components/notes/NoteSearch";
 import Pagination from "../components/common/Pagination";
+import Button from "../components/common/Button";
 
+import FeatureGate from "../features/featureFlags/FeatureGate";
+import { useFeatureFlags } from "../features/featureFlags/useFeatureFlags";
+import { useTags } from "../features/tags/useTags";
+import { useFolders } from "../features/folders/useFolders";
 
 import { noteService } from "../features/notes/noteService";
 import { getErrorMessage } from "../utils/getErrorMessage";
@@ -95,6 +100,9 @@ function NotesPage() {
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
+  const [selectedTag, setSelectedTag] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState("");
+
   const [page, setPage] = useState(1);
   const [limit] = useState(DEFAULT_LIMIT);
   const [pagination, setPagination] = useState(defaultPagination);
@@ -104,9 +112,36 @@ function NotesPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
+  const { isEnabled } = useFeatureFlags();
+
+  const tagsEnabled = isEnabled("tags");
+  const foldersEnabled = isEnabled("folders");
+
+  const {
+    data: tagsData,
+    isLoading: tagsLoading,
+    isError: tagsError,
+  } = useTags({
+    enabled: tagsEnabled,
+  });
+
+  const {
+    data: foldersData,
+    isLoading: foldersLoading,
+    isError: foldersError,
+  } = useFolders({
+    enabled: foldersEnabled,
+  });
+
+  const tags = tagsData?.data ?? [];
+  const folders = foldersData?.data ?? [];
+
   const noteStats = useMemo(() => {
     const total = pagination.total;
-    const completedOnPage = notes.filter((note) => note.completed).length;
+    const completedOnPage = notes.filter(
+      (note) => note.completed
+    ).length;
+
     const pendingOnPage = notes.length - completedOnPage;
 
     return {
@@ -130,7 +165,10 @@ function NotesPage() {
   );
 
   const fetchNotes = useCallback(
-    async (pageValue = 1, searchValue = "") => {
+    async (
+      pageValue = 1,
+      searchValue = ""
+    ) => {
       try {
         setLoading(true);
         setError("");
@@ -139,38 +177,64 @@ function NotesPage() {
           page: pageValue,
           limit,
           search: searchValue,
+          tag: selectedTag,
+          folder: selectedFolder,
         });
 
-        console.log("GET NOTES RESULT:", result);
-
         const notesFromBackend = extractNotes(result);
-        const paginationFromBackend = extractPagination(result);
+        const paginationFromBackend =
+          extractPagination(result);
 
         setNotes(notesFromBackend);
         setPagination(paginationFromBackend);
       } catch (error) {
-        if (handleUnauthorized(error)) return;
+        if (handleUnauthorized(error)) {
+          return;
+        }
 
-        setError(getErrorMessage(error, "Failed to load notes"));
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to load notes"
+          )
+        );
       } finally {
         setLoading(false);
       }
     },
-    [handleUnauthorized, limit]
+    [
+      handleUnauthorized,
+      limit,
+      selectedTag,
+      selectedFolder,
+    ]
   );
 
   useEffect(() => {
     fetchNotes(page, debouncedSearch);
   }, [page, debouncedSearch, fetchNotes]);
 
+  /*
+   * Reset pagination when filters change.
+   *
+   * The filter values are intentionally not included
+   * in this effect's dependency list because they are
+   * already represented by selectedTag/selectedFolder.
+   */
+  useEffect(() => {
+    setPage(1);
+  }, [selectedTag, selectedFolder]);
+
   async function handleAddNote(noteData) {
     try {
       setActionLoading(true);
       setError("");
 
-      const result=await noteService.createNote(noteData);
+      const result = await noteService.createNote(noteData);
 
-      showSuccessToast(result.message || "Note created successfully");
+      showSuccessToast(
+        result.message || "Note created successfully"
+      );
 
       if (page !== 1) {
         setPage(1);
@@ -178,9 +242,15 @@ function NotesPage() {
         await fetchNotes(1, debouncedSearch);
       }
     } catch (error) {
-      if (handleUnauthorized(error)) return;
+      if (handleUnauthorized(error)) {
+        return;
+      }
 
-      const message=getErrorMessage(error, "Failed to create note");
+      const message = getErrorMessage(
+        error,
+        "Failed to create note"
+      );
+
       setError(message);
       showErrorToast(message);
     } finally {
@@ -193,21 +263,34 @@ function NotesPage() {
       setActionLoading(true);
       setError("");
 
-      const result=await noteService.deleteNote(noteId);
+      const result = await noteService.deleteNote(noteId);
 
-      showSuccessToast(result.message || "Note deleted successfully");
+      showSuccessToast(
+        result.message || "Note deleted successfully"
+      );
 
-      const remainingNotesOnPage = notes.filter((note) => note._id !== noteId);
+      const remainingNotesOnPage = notes.filter(
+        (note) => note._id !== noteId
+      );
 
-      if (remainingNotesOnPage.length === 0 && page > 1) {
+      if (
+        remainingNotesOnPage.length === 0 &&
+        page > 1
+      ) {
         setPage((prevPage) => prevPage - 1);
       } else {
         await fetchNotes(page, debouncedSearch);
       }
     } catch (error) {
-      if (handleUnauthorized(error)) return;
+      if (handleUnauthorized(error)) {
+        return;
+      }
 
-      const message=getErrorMessage(error, "Failed to delete note");
+      const message = getErrorMessage(
+        error,
+        "Failed to delete note"
+      );
+
       setError(message);
       showErrorToast(message);
     } finally {
@@ -215,63 +298,92 @@ function NotesPage() {
     }
   }
 
-async function handleToggleComplete(noteId) {
-  const noteToUpdate = notes.find(
-    (note) => note._id === noteId
-  );
-
-  if (!noteToUpdate) {
-    const message = "Note not found";
-    setError(message);
-    showErrorToast(message);
-    return;
-  }
-
-  const previousNotes = notes;
-  const newCompleted = !noteToUpdate.completed;
-
-  // Optimistic update
-  setNotes((prevNotes) =>
-    prevNotes.map((note) =>
-      note._id === noteId
-        ? {
-            ...note,
-            completed: newCompleted,
-          }
-        : note
-    )
-  );
-
-  try {
-    setError("");
-
-    const result = await noteService.updateNote(noteId, {
-      title: noteToUpdate.title,
-      content: noteToUpdate.content,
-      completed: newCompleted,
-    });
-
-    showSuccessToast(
-      result.message ||
-        (newCompleted
-          ? "Note marked as completed"
-          : "Note marked as pending")
-    );
-  } catch (error) {
-    // Rollback
-    setNotes(previousNotes);
-
-    if (handleUnauthorized(error)) return;
-
-    const message = getErrorMessage(
-      error,
-      "Failed to update note status"
+  async function handleToggleComplete(noteId) {
+    const noteToUpdate = notes.find(
+      (note) => note._id === noteId
     );
 
-    setError(message);
-    showErrorToast(message);
+    if (!noteToUpdate) {
+      const message = "Note not found";
+
+      setError(message);
+      showErrorToast(message);
+
+      return;
+    }
+
+    const previousNotes = notes;
+    const newCompleted = !noteToUpdate.completed;
+
+    // Optimistic UI update
+    setNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note._id === noteId
+          ? {
+              ...note,
+              completed: newCompleted,
+            }
+          : note
+      )
+    );
+
+    try {
+      setError("");
+
+      const updateData = {
+        title: noteToUpdate.title,
+        content: noteToUpdate.content,
+        completed: newCompleted,
+      };
+
+      /*
+       * Preserve existing tags and folder when
+       * toggling completion.
+       */
+      if (tagsEnabled) {
+        updateData.tags =
+          noteToUpdate.tags?.map((tag) =>
+            typeof tag === "string"
+              ? tag
+              : tag._id
+          ) ?? [];
+      }
+
+      if (foldersEnabled) {
+        updateData.folder =
+          typeof noteToUpdate.folder === "string"
+            ? noteToUpdate.folder
+            : noteToUpdate.folder?._id ?? null;
+      }
+
+      const result = await noteService.updateNote(
+        noteId,
+        updateData
+      );
+
+      showSuccessToast(
+        result.message ||
+          (newCompleted
+            ? "Note marked as completed"
+            : "Note marked as pending")
+      );
+    } catch (error) {
+      // Rollback optimistic update
+      setNotes(previousNotes);
+
+      if (handleUnauthorized(error)) {
+        return;
+      }
+
+      const message = getErrorMessage(
+        error,
+        "Failed to update note status"
+      );
+
+      setError(message);
+      showErrorToast(message);
+    }
   }
-}
 
   const handleStartEdit = useCallback((note) => {
     setEditingNote(note);
@@ -286,33 +398,74 @@ async function handleToggleComplete(noteId) {
       setActionLoading(true);
       setError("");
 
-      const result = await noteService.updateNote(updatedNote._id, {
+      const updateData = {
         title: updatedNote.title,
         content: updatedNote.content,
         completed: updatedNote.completed,
-      });
+      };
+
+      /*
+       * Preserve/update tags when the feature is enabled.
+       */
+      if (tagsEnabled) {
+        updateData.tags =
+          updatedNote.tags?.map((tag) =>
+            typeof tag === "string"
+              ? tag
+              : tag._id
+          ) ?? [];
+      }
+
+      /*
+       * Preserve/update folder when the feature is enabled.
+       */
+      if (foldersEnabled) {
+        updateData.folder =
+          typeof updatedNote.folder === "string"
+            ? updatedNote.folder
+            : updatedNote.folder?._id ?? null;
+      }
+
+      const result = await noteService.updateNote(
+        updatedNote._id,
+        updateData
+      );
 
       const savedNote = extractNote(result);
 
       if (!savedNote) {
-        const message="Note updated but response format was unexpected";
+        const message =
+          "Note updated but response format was unexpected";
+
         setError(message);
         showErrorToast(message);
+
         return;
       }
 
       setNotes((prevNotes) =>
         prevNotes.map((note) =>
-          note._id === savedNote._id ? savedNote : note
+          note._id === savedNote._id
+            ? savedNote
+            : note
         )
       );
 
       setEditingNote(null);
-      showSuccessToast(result.message || "Note updated successfully");
-    } catch (error) {
-      if (handleUnauthorized(error)) return;
 
-      const message = getErrorMessage(error, "Failed to update note");
+      showSuccessToast(
+        result.message || "Note updated successfully"
+      );
+    } catch (error) {
+      if (handleUnauthorized(error)) {
+        return;
+      }
+
+      const message = getErrorMessage(
+        error,
+        "Failed to update note"
+      );
+
       setError(message);
       showErrorToast(message);
     } finally {
@@ -330,21 +483,45 @@ async function handleToggleComplete(noteId) {
     setPage(1);
   }, []);
 
+  const handleTagChange = useCallback((event) => {
+    setSelectedTag(event.target.value);
+    setPage(1);
+  }, []);
+
+  const handleFolderChange = useCallback((event) => {
+    setSelectedFolder(event.target.value);
+    setPage(1);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedTag("");
+    setSelectedFolder("");
+    setPage(1);
+  }, []);
+
   const handlePrevPage = useCallback(() => {
-    setPage((prevPage) => Math.max(prevPage - 1, 1));
+    setPage((prevPage) =>
+      Math.max(prevPage - 1, 1)
+    );
   }, []);
 
   const handleNextPage = useCallback(() => {
     setPage((prevPage) => prevPage + 1);
   }, []);
 
+  const filtersActive =
+    Boolean(selectedTag) ||
+    Boolean(selectedFolder);
 
   return (
     <div>
       <div className="page-header">
         <div>
           <h1>My Notes</h1>
-          <p>Manage your personal notes, comments, and attachments.</p>
+          <p>
+            Manage your personal notes, comments, and
+            attachments.
+          </p>
         </div>
       </div>
 
@@ -356,12 +533,16 @@ async function handleToggleComplete(noteId) {
 
         <div className="stat-card">
           <span>Completed on this page</span>
-          <strong>{noteStats.completedOnPage}</strong>
+          <strong>
+            {noteStats.completedOnPage}
+          </strong>
         </div>
 
         <div className="stat-card">
           <span>Pending on this page</span>
-          <strong>{noteStats.pendingOnPage}</strong>
+          <strong>
+            {noteStats.pendingOnPage}
+          </strong>
         </div>
       </div>
 
@@ -372,6 +553,75 @@ async function handleToggleComplete(noteId) {
         onSearchChange={handleSearchChange}
         onClearSearch={handleClearSearch}
       />
+
+      <div className="note-filters">
+        <FeatureGate feature="tags">
+          <div>
+            <label htmlFor="note-tag-filter">
+              Tag
+            </label>
+
+            <select
+              id="note-tag-filter"
+              value={selectedTag}
+              onChange={handleTagChange}
+              disabled={tagsLoading || tagsError}
+            >
+              <option value="">
+                All tags
+              </option>
+
+              {tags.map((tag) => (
+                <option
+                  key={tag._id}
+                  value={tag._id}
+                >
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </FeatureGate>
+
+        <FeatureGate feature="folders">
+          <div>
+            <label htmlFor="note-folder-filter">
+              Folder
+            </label>
+
+            <select
+              id="note-folder-filter"
+              value={selectedFolder}
+              onChange={handleFolderChange}
+              disabled={
+                foldersLoading || foldersError
+              }
+            >
+              <option value="">
+                All folders
+              </option>
+
+              {folders.map((folder) => (
+                <option
+                  key={folder._id}
+                  value={folder._id}
+                >
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </FeatureGate>
+
+        {filtersActive && (
+          <Button
+            type="button"
+            onClick={handleClearFilters}
+          >
+            Clear Filters
+          </Button>
+        )}
+      </div>
 
       <NoteForm
         onAddNote={handleAddNote}
