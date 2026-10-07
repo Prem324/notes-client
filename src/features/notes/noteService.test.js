@@ -178,4 +178,121 @@ describe("noteService", () => {
 
     expect(result).toEqual(fakeResponse.data);
   });
+
+    test("shareNote calls correct API endpoint with share data and returns data", async () => {
+    const shareData = {
+      email: "editor@example.com",
+      permission: "editor",
+    };
+
+    const fakeResponse = {
+      data: {
+        success: true,
+        message: "Note shared successfully",
+        data: {
+          note: "note1",
+          user: "user2",
+          permission: "editor",
+        },
+      },
+    };
+
+    axiosInstance.post.mockResolvedValue(fakeResponse);
+
+    const result = await noteService.shareNote(
+      "note1",
+      shareData
+    );
+
+    expect(axiosInstance.post).toHaveBeenCalledWith(
+      "/notes/note1/share",
+      shareData
+    );
+
+    expect(result).toEqual(fakeResponse.data);
+  });
+
+  test("getNoteCollaborators calls correct API endpoint and returns data", async () => {
+    const fakeResponse = {
+      data: {
+        success: true,
+        data: [
+          {
+            _id: "share1",
+            user: {
+              _id: "user2",
+              name: "Editor User",
+              email: "editor@example.com",
+            },
+            permission: "editor",
+          },
+        ],
+      },
+    };
+
+    axiosInstance.get.mockResolvedValue(fakeResponse);
+
+    const result =
+      await noteService.getNoteCollaborators("note1");
+
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+      "/notes/note1/collaborators"
+    );
+
+    expect(result).toEqual(fakeResponse.data);
+  });
+
+  test("updateCollaboratorPermission calls correct API endpoint and returns data", async () => {
+    const fakeResponse = {
+      data: {
+        success: true,
+        message: "Collaborator permission updated successfully",
+        data: {
+          _id: "share1",
+          permission: "viewer",
+        },
+      },
+    };
+
+    axiosInstance.put.mockResolvedValue(fakeResponse);
+
+    const result =
+      await noteService.updateCollaboratorPermission(
+        "note1",
+        "user2",
+        "viewer"
+      );
+
+    expect(axiosInstance.put).toHaveBeenCalledWith(
+      "/notes/note1/collaborators/user2",
+      {
+        permission: "viewer",
+      }
+    );
+
+    expect(result).toEqual(fakeResponse.data);
+  });
+
+  test("removeCollaborator calls correct API endpoint and returns data", async () => {
+    const fakeResponse = {
+      data: {
+        success: true,
+        message: "Collaborator removed successfully",
+      },
+    };
+
+    axiosInstance.delete.mockResolvedValue(fakeResponse);
+
+    const result =
+      await noteService.removeCollaborator(
+        "note1",
+        "user2"
+      );
+
+    expect(axiosInstance.delete).toHaveBeenCalledWith(
+      "/notes/note1/collaborators/user2"
+    );
+
+    expect(result).toEqual(fakeResponse.data);
+  });
 });

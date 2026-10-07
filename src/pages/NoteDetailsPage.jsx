@@ -9,14 +9,19 @@ import CommentsList from "../components/comments/CommentsList";
 import AttachmentForm from "../components/attachments/AttachmentForm";
 import AttachmentList from "../components/attachments/AttachmentList";
 
+import ShareNoteForm from "../features/notes/ShareNoteForm";
+import CollaboratorsList from "../features/notes/CollaboratorsList";
+import FeatureGate from "../features/featureFlags/FeatureGate";
+
 import { noteService } from "../features/notes/noteService";
 import { commentService } from "../features/comments/commentService";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { useAuth } from "../features/auth/AuthContext";
 import { socket } from "../socket/socket";
-import { showSuccessToast, showErrorToast } from "../utils/toast";
-
-
+import {
+  showSuccessToast,
+  showErrorToast,
+} from "../utils/toast";
 
 function extractComments(result) {
   if (Array.isArray(result.data)) {
@@ -72,12 +77,20 @@ function NoteDetailsPage() {
   const [note, setNote] = useState(null);
   const [comments, setComments] = useState([]);
 
-  const [deletingAttachmentId, setDeletingAttachmentId] = useState(null);
-  const [attachmentUploadLoading, setAttachmentUploadLoading] = useState(false);
+  const [
+    collaboratorsRefreshKey,
+    setCollaboratorsRefreshKey,
+] = useState(0);
+
+  const [deletingAttachmentId, setDeletingAttachmentId] =
+    useState(null);
+
+  const [attachmentUploadLoading, setAttachmentUploadLoading] =
+    useState(false);
+
   const [loading, setLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
   const [error, setError] = useState("");
-
 
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -103,14 +116,22 @@ function NoteDetailsPage() {
       ]);
 
       const selectedNote = extractNote(noteResult);
-      const commentsFromBackend = extractComments(commentsResult);
+      const commentsFromBackend =
+        extractComments(commentsResult);
 
       setNote(selectedNote);
       setComments(commentsFromBackend);
     } catch (error) {
-      if (handleUnauthorized(error)) return;
+      if (handleUnauthorized(error)) {
+        return;
+      }
 
-      setError(getErrorMessage(error, "Failed to load note details"));
+      setError(
+        getErrorMessage(
+          error,
+          "Failed to load note details"
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -120,87 +141,97 @@ function NoteDetailsPage() {
     fetchNoteDetails();
   }, [noteId]);
 
-/*useEffect(() => {
-  function handleConnect() {
-    console.log("Socket connected:", socket.id);
-  }
-
-  function handleDisconnect() {
-    console.log("Socket disconnected");
-  }
-
-  socket.on("connect", handleConnect);
-  socket.on("disconnect", handleDisconnect);
-
-  return () => {
-    socket.off("connect", handleConnect);
-    socket.off("disconnect", handleDisconnect);
-  };
-}, []);*/
-
-
   useEffect(() => {
-  if (!noteId) return;
-
-  if (!socket.connected) {
-    socket.connect();
-  }
-
-  socket.emit("join-note", noteId);
-
-  function handleCommentCreated(payload) {
-
-    if(payload.noteId !== noteId){
+    if (!noteId) {
       return;
     }
 
-    const newComment=payload.comment;
+    if (!socket.connected) {
+      socket.connect();
+    }
 
-    setComments((prevComments) => {
-      const alreadyExists = prevComments.some(
-        (comment) => String(comment._id) === String(newComment._id)
-      );
+    socket.emit("join-note", noteId);
 
-      if (alreadyExists) {
-        return prevComments;
+    function handleCommentCreated(payload) {
+      if (payload.noteId !== noteId) {
+        return;
       }
 
-      return [newComment, ...prevComments];
-    });
-  }
+      const newComment = payload.comment;
 
-  socket.on("comment:created", handleCommentCreated);
+      setComments((prevComments) => {
+        const alreadyExists = prevComments.some(
+          (comment) =>
+            String(comment._id) ===
+            String(newComment._id)
+        );
 
-  return () => {
-    socket.off("comment:created", handleCommentCreated);
-    socket.emit("leave-note", noteId);
-  };
-}, [noteId]);
+        if (alreadyExists) {
+          return prevComments;
+        }
+
+        return [newComment, ...prevComments];
+      });
+    }
+
+    socket.on(
+      "comment:created",
+      handleCommentCreated
+    );
+
+    return () => {
+      socket.off(
+        "comment:created",
+        handleCommentCreated
+      );
+
+      socket.emit("leave-note", noteId);
+    };
+  }, [noteId]);
 
   async function handleAddComment(text) {
     try {
       setCommentLoading(true);
       setError("");
 
-      const result = await commentService.createComment(noteId, text);
+      const result =
+        await commentService.createComment(
+          noteId,
+          text
+        );
 
-      const createdComment = extractComment(result);
+      const createdComment =
+        extractComment(result);
 
       if (!createdComment) {
-        const message="Comment created but response format was unexpected";
+        const message =
+          "Comment created but response format was unexpected";
+
         setError(message);
         showErrorToast(message);
+
         return false;
       }
-      showSuccessToast(result.message || "Comment added successfully");
+
+      showSuccessToast(
+        result.message ||
+          "Comment added successfully"
+      );
 
       return true;
     } catch (error) {
-      if (handleUnauthorized(error)) return false;
+      if (handleUnauthorized(error)) {
+        return false;
+      }
 
-      const message=getErrorMessage(error, "Failed to add comment");
+      const message = getErrorMessage(
+        error,
+        "Failed to add comment"
+      );
+
       setError(message);
       showErrorToast(message);
+
       return false;
     } finally {
       setCommentLoading(false);
@@ -208,89 +239,169 @@ function NoteDetailsPage() {
   }
 
   async function handleUploadAttachments(formData) {
-  try {
-    setAttachmentUploadLoading(true);
-    setError("");
+    try {
+      setAttachmentUploadLoading(true);
+      setError("");
 
-    const result = await noteService.uploadAttachments(noteId, formData);
+      const result =
+        await noteService.uploadAttachments(
+          noteId,
+          formData
+        );
 
-    const updatedNote = extractNote(result);
+      const updatedNote = extractNote(result);
 
-    if (!updatedNote) {
-      setError("Files uploaded but response format was unexpected");
-      return false;
-    }
+      if (!updatedNote) {
+        setError(
+          "Files uploaded but response format was unexpected"
+        );
 
-    setNote(updatedNote);
-    showSuccessToast(result.message || "Attachment uploaded successfully");
+        return false;
+      }
 
-    return true;
-  } catch (error) {
-    if (handleUnauthorized(error)) return false;
+      setNote(updatedNote);
 
-    const message=getErrorMessage(error, "Failed to upload attachments");
-    setError(message);
-    showErrorToast(message);
-    return false;
-  } finally {
-    setAttachmentUploadLoading(false);
-  }
-}
+      showSuccessToast(
+        result.message ||
+          "Attachment uploaded successfully"
+      );
 
-async function handleDeleteAttachment(attachment) {
-  try {
-    setDeletingAttachmentId(attachment._id);
-    setError("");
+      return true;
+    } catch (error) {
+      if (handleUnauthorized(error)) {
+        return false;
+      }
 
-    const result = await noteService.deleteAttachment(
-      noteId,
-      attachment._id
-    );
+      const message = getErrorMessage(
+        error,
+        "Failed to upload attachments"
+      );
 
-    const updatedNote = extractNote(result);
-
-    if (!updatedNote) {
-      const message="Attachment deleted but response format was unexpected";
-      setError(message)
+      setError(message);
       showErrorToast(message);
-      return;
+
+      return false;
+    } finally {
+      setAttachmentUploadLoading(false);
     }
-
-    setNote(updatedNote);
-    showSuccessToast(result.message || "Attachment deleted successfully");
-  } catch (error) {
-    if (handleUnauthorized(error)) return;
-
-    const message=getErrorMessage(error, "Failed to delete attachment");
-    setError(message);
-    showErrorToast(message);
-  } finally {
-    setDeletingAttachmentId(null);
   }
-}
+
+  async function handleDeleteAttachment(attachment) {
+    try {
+      setDeletingAttachmentId(attachment._id);
+      setError("");
+
+      const result =
+        await noteService.deleteAttachment(
+          noteId,
+          attachment._id
+        );
+
+      const updatedNote = extractNote(result);
+
+      if (!updatedNote) {
+        const message =
+          "Attachment deleted but response format was unexpected";
+
+        setError(message);
+        showErrorToast(message);
+
+        return;
+      }
+
+      setNote(updatedNote);
+
+      showSuccessToast(
+        result.message ||
+          "Attachment deleted successfully"
+      );
+    } catch (error) {
+      if (handleUnauthorized(error)) {
+        return;
+      }
+
+      const message = getErrorMessage(
+        error,
+        "Failed to delete attachment"
+      );
+
+      setError(message);
+      showErrorToast(message);
+    } finally {
+      setDeletingAttachmentId(null);
+    }
+  }
 
   if (loading) {
-    return <Loader message="Loading note details..." />;
+    return (
+      <Loader message="Loading note details..." />
+    );
   }
+
+  /*
+   * Backend returns one of:
+   *
+   * owner
+   * admin
+   * editor
+   * viewer
+   *
+   * The backend remains the source of truth for authorization.
+   * These values only control which UI controls are exposed.
+   */
+  const accessRole = note?.accessRole;
+
+  const canManageSharing =
+    accessRole === "owner" ||
+    accessRole === "admin";
+
+  const canEdit =
+    accessRole === "owner" ||
+    accessRole === "admin" ||
+    accessRole === "editor";
+
+  const canDeleteAttachments =
+    accessRole === "owner" ||
+    accessRole === "admin";
 
   return (
     <div>
-      <Link to="/notes">Back to Notes</Link>
+      <Link to="/notes">
+        Back to Notes
+      </Link>
 
       <div className="page-header">
-  <div>
-    <h1>Note Details</h1>
-    <p>Manage your personal note, comments, and attachments.</p>
-  </div>
-</div>
+        <div>
+          <h1>Note Details</h1>
+
+          <p>
+            Manage your personal note, comments,
+            and attachments.
+          </p>
+        </div>
+      </div>
 
       <ErrorMessage message={error} />
 
       {note ? (
         <div>
           <h2>{note.title}</h2>
+
           <p>{note.content}</p>
-          <p>Status: {note.completed ? "Completed" : "Pending"}</p>
+
+          <p>
+            Status:{" "}
+            {note.completed
+              ? "Completed"
+              : "Pending"}
+          </p>
+
+          {accessRole && (
+            <p>
+              Access:{" "}
+              <strong>{accessRole}</strong>
+            </p>
+          )}
         </div>
       ) : (
         <p>Note not found</p>
@@ -298,17 +409,53 @@ async function handleDeleteAttachment(attachment) {
 
       {note && (
         <>
-        <AttachmentList 
-        attachments={note.attachments || []} 
-        onDeleteAttachment={handleDeleteAttachment}
-        deletingAttachmentId={deletingAttachmentId}
-        />
-        
-        <AttachmentForm
-        onUploadAttachments={handleUploadAttachments}
-        loading={attachmentUploadLoading}
-        />
+          <AttachmentList
+            attachments={note.attachments || []}
+            onDeleteAttachment={
+              canDeleteAttachments
+                ? handleDeleteAttachment
+                : undefined
+            }
+            deletingAttachmentId={
+              deletingAttachmentId
+            }
+          />
+
+          {canEdit && (
+            <AttachmentForm
+              onUploadAttachments={
+                handleUploadAttachments
+              }
+              loading={
+                attachmentUploadLoading
+              }
+            />
+          )}
         </>
+      )}
+
+      {note && canManageSharing && (
+        <FeatureGate
+          feature="noteSharing"
+        >
+          <section aria-label="Note sharing">
+            <h2>Share Note</h2>
+
+            <ShareNoteForm
+    noteId={noteId}
+    onShared={() => {
+        setCollaboratorsRefreshKey(
+            (current) => current + 1
+        );
+    }}
+/>
+
+<CollaboratorsList
+    noteId={noteId}
+    refreshKey={collaboratorsRefreshKey}
+/>
+          </section>
+        </FeatureGate>
       )}
 
       <CommentForm
@@ -316,7 +463,9 @@ async function handleDeleteAttachment(attachment) {
         loading={commentLoading}
       />
 
-      <CommentsList comments={comments} />
+      <CommentsList
+        comments={comments}
+      />
     </div>
   );
 }

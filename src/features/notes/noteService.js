@@ -50,6 +50,44 @@ async function deleteAttachment(noteId, attachmentId) {
     return response.data;
 }
 
+async function shareNote(noteId, shareData) {
+    const response = await axiosInstance.post(
+        `/notes/${noteId}/share`,
+        shareData
+    );
+
+    return response.data;
+}
+
+async function getNoteCollaborators(noteId) {
+    const response = await axiosInstance.get(
+        `/notes/${noteId}/collaborators`
+    );
+
+    return response.data;
+}
+
+async function updateCollaboratorPermission(
+    noteId,
+    userId,
+    permission
+) {
+    const response = await axiosInstance.put(
+        `/notes/${noteId}/collaborators/${userId}`,
+        { permission }
+    );
+
+    return response.data;
+}
+
+async function removeCollaborator(noteId, userId) {
+    const response = await axiosInstance.delete(
+        `/notes/${noteId}/collaborators/${userId}`
+    );
+
+    return response.data;
+}
+
 export const noteService = {
     getNotes,
     getNoteById,
@@ -57,5 +95,9 @@ export const noteService = {
     updateNote,
     deleteNote,
     uploadAttachments,
-    deleteAttachment
+    deleteAttachment,
+    shareNote,
+    getNoteCollaborators,
+    updateCollaboratorPermission,
+    removeCollaborator,
 };
