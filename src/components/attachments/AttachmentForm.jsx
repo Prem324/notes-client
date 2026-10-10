@@ -11,6 +11,7 @@ function AttachmentForm({ onUploadAttachments, loading = false }) {
     formState: { errors },
   } = useForm();
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedFiles = watch("attachments");
 
   async function handleFormSubmit(data) {

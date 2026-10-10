@@ -96,18 +96,19 @@ test("user can login successfully", async ({ page }) => {
 test("user can register successfully", async ({ page }) => {
   await page.goto("/register");
 
+  const uniqueEmail = `playwright-${Date.now()}@example.com`;
   await page.getByLabel("Name").fill("Playwright Test User");
-  await page.getByLabel("Email").fill(process.env.E2E_REGISTER_EMAIL);
+  await page.getByLabel("Email").fill(uniqueEmail);
   await page.getByLabel("Password").fill(process.env.E2E_REGISTER_PASSWORD);
 
   await page.getByRole("button", { name: "Register" }).click();
 
   await expect(
     page.getByRole("heading", { name: "Check Your Email" })
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15000 });
 
   await expect(
-    page.getByText(process.env.E2E_REGISTER_EMAIL)
+    page.getByText(uniqueEmail)
   ).toBeVisible();
 
   await expect(

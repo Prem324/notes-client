@@ -1,7 +1,15 @@
 import { test, expect } from "@playwright/test";
 
 test("authenticated user can create a note", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create note
   const title = `Playwright Note ${Date.now()}`;
@@ -18,7 +26,15 @@ await page.goto("/notes");
 });
 
 test("authenticated user can edit a note", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note specifically for this test
   const originalTitle = `Edit Test ${Date.now()}`;
@@ -58,7 +74,15 @@ await page.goto("/notes");
 });
 
 test("authenticated user can delete a note", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note for this test
   const title = `Delete Test ${Date.now()}`;
@@ -84,7 +108,15 @@ await page.goto("/notes");
 });
 
 test("authenticated user can toggle note completion", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a test note
   const title = `Complete Test ${Date.now()}`;
@@ -123,7 +155,14 @@ await page.goto("/notes");
 });
 
 test("authenticated user can search notes", async ({ page }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a unique note
   const uniqueWord = `SearchTest${Date.now()}`;
@@ -150,7 +189,14 @@ await page.goto("/notes");
 test("authenticated user sees empty state when search has no results", async ({
   page,
 }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   const searchTerm = `NoMatch${Date.now()}`;
 
@@ -164,7 +210,14 @@ await page.goto("/notes");
 test("authenticated user can navigate through note pagination", async ({
   page,
 }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create 11 notes so pagination requires 2 pages
   for (let i = 1; i <= 11; i++) {
@@ -175,12 +228,12 @@ await page.goto("/notes");
   }
 
   // We should initially be on page 1
-  await expect(page.getByText(/Page 1 of \d+/)).toBeVisible();
+  await expect(page.getByText(/Page 1 of 2/)).toBeVisible();
 
   // Go to page 2
   await page.getByRole("button", { name: "Next" }).click();
 
-  await expect(page.getByText(/Page 2 of \d+/)).toBeVisible();
+  await expect(page.getByText(/Page 2 of 2/)).toBeVisible();
 
   // Previous button should now be available
   await expect(
@@ -190,11 +243,18 @@ await page.goto("/notes");
   // Return to page 1
   await page.getByRole("button", { name: "Previous" }).click();
 
-  await expect(page.getByText(/Page 1 of \d+/)).toBeVisible();
+  await expect(page.getByText(/Page 1 of 2/)).toBeVisible();
 });
 
 test("authenticated user can view note details", async ({ page }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   const title = `Details Test ${Date.now()}`;
   const content = "This note is used to test the details page.";
@@ -219,7 +279,14 @@ await page.goto("/notes");
 });
 
 test("authenticated user can add a comment to a note", async ({ page }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note
   const title = `Comment Test ${Date.now()}`;
@@ -260,7 +327,14 @@ await page.goto("/notes");
 test("comment form validates required and whitespace-only input", async ({
   page,
 }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note
   const title = `Comment Validation ${Date.now()}`;
@@ -304,7 +378,14 @@ await page.goto("/notes");
 test("authenticated user can upload an attachment to a note", async ({
   page,
 }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note
   const title = `Attachment Test ${Date.now()}`;
@@ -356,7 +437,14 @@ await page.locator("#attachments").setInputFiles({
 });
 
 test("authenticated user can delete a note attachment", async ({ page }) => {
-await page.goto("/notes");
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note
   const title = `Attachment Delete Test ${Date.now()}`;
@@ -414,7 +502,15 @@ await page.goto("/notes");
 });
 
 test("note form validates title and content", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Required validation
   await page.getByRole("button", { name: "Create Note" }).click();
@@ -444,7 +540,15 @@ await page.goto("/notes");
 });
 
 test("edit note form validates title", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note that we can edit
   const title = `E2E Edit Validation ${Date.now()}`;
@@ -479,7 +583,15 @@ await page.goto("/notes");
 });
 
 test("authenticated user can cancel note editing", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Create a note
   const title = `E2E Cancel Edit ${Date.now()}`;
@@ -525,7 +637,15 @@ await page.goto("/notes");
 });
 
 test("note form validates maximum title length", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Enter title longer than 100 characters
   const longTitle = "A".repeat(101);
@@ -541,7 +661,15 @@ await page.goto("/notes");
 });
 
 test("note form rejects whitespace-only title", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Whitespace-only title
   await page.getByLabel("Title").fill("   ");
@@ -555,7 +683,15 @@ await page.goto("/notes");
 });
 
 test("attachment form rejects invalid file types", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Open an existing note
   await page
@@ -585,7 +721,15 @@ await expect(
 });
 
 test("attachment form rejects more than 5 files", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Open an existing note
   await page
@@ -620,7 +764,15 @@ await page.goto("/notes");
 });
 
 test("attachment form requires at least one file", async ({ page }) => {
-await page.goto("/notes");
+  // Login
+  await page.goto("/login");
+
+  await page.getByLabel("Email").fill(process.env.E2E_USER_EMAIL);
+  await page.getByLabel("Password").fill(process.env.E2E_USER_PASSWORD);
+
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await expect(page).toHaveURL(/\/notes/);
 
   // Open an existing note
   await page

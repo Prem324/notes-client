@@ -85,7 +85,7 @@ export function AuthProvider({ children }) {
 
                 setUser(profileResult.user);
 
-            } catch (error) {
+            } catch {
 
                 /*
                  * No valid authentication.
@@ -196,6 +196,7 @@ export function AuthProvider({ children }) {
 }
 
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
 
     const context =

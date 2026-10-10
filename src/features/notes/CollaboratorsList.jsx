@@ -44,6 +44,7 @@ function CollaboratorsList({
 
     useEffect(() => {
         loadCollaborators();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [noteId, refreshKey]);
 
     async function handlePermissionChange(

@@ -139,6 +139,7 @@ function NoteDetailsPage() {
 
   useEffect(() => {
     fetchNoteDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteId]);
 
   useEffect(() => {
@@ -259,7 +260,10 @@ function NoteDetailsPage() {
         return false;
       }
 
-      setNote(updatedNote);
+      setNote(prevNote => ({
+        ...prevNote,
+        attachments: updatedNote.attachments
+      }));
 
       showSuccessToast(
         result.message ||

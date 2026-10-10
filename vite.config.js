@@ -8,4 +8,7 @@ export default defineConfig({
     setupFiles: "./src/test/setup.js",
     exclude: ["**/node_modules/**", "**/dist/**", "tests/e2e/**"],
   },
+  server: {
+    host: "0.0.0.0",
+  },
 });

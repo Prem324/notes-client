@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/AuthContext";
 import Button from "../common/Button";
+import NotificationBell from "../../features/notifications/NotificationBell";
 
 function Navbar() {
   const { isLoggedIn, user, logout } = useAuth();
@@ -23,7 +24,6 @@ function Navbar() {
         {isLoggedIn ? (
           <>
             <Link to="/notes">Notes</Link>
-
             <Link to="/profile">Profile</Link>
 
             {user?.role === "admin" && (
@@ -31,7 +31,7 @@ function Navbar() {
                 Admin
               </Link>
             )}
-
+            <NotificationBell />
             <Button
               type="button"
               onClick={handleLogout}

@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "refreshToken",
+      "value": "15aaec0b19537a4fb36c0bf470f2eba2348afa4dd5b921b1f1ec13f55677b8c74888f7baf1385e1560f46b519559c17f2b727ead407da15ee67b8ad4fb24f032",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1792216968.414475,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:5173",
+      "localStorage": [
+        {
+          "name": "token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhODViMWNjYTQ5NmNjMjdlODBkZTg0NCIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc5MTYxMjE2OCwiZXhwIjoxNzkxNjEzMDY4fQ.jRKMVXQwAAvp-tIGsD8sXuUiPbOzEZHOOFDAXtYj0wQ"
+        }
+      ]
+    }
+  ]
+}
