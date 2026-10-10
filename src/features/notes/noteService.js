@@ -18,6 +18,23 @@ async function getNoteById(noteId) {
     return response.data;
 }
 
+async function getNoteActivity(
+    noteId,
+    { page = 1, limit = 20 } = {}
+) {
+    const response = await axiosInstance.get(
+        `/notes/${noteId}/activity`,
+        {
+            params: {
+                page,
+                limit,
+            },
+        }
+    );
+
+    return response.data;
+}
+
 async function createNote(noteData) {
     const response=await axiosInstance.post("/notes",noteData)
     return response.data;
@@ -91,6 +108,7 @@ async function removeCollaborator(noteId, userId) {
 export const noteService = {
     getNotes,
     getNoteById,
+    getNoteActivity,
     createNote,
     updateNote,
     deleteNote,

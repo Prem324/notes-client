@@ -12,6 +12,7 @@ import AttachmentList from "../components/attachments/AttachmentList";
 import ShareNoteForm from "../features/notes/ShareNoteForm";
 import CollaboratorsList from "../features/notes/CollaboratorsList";
 import FeatureGate from "../features/featureFlags/FeatureGate";
+import NoteActivityTimeline from "../features/notes/NoteActivityTimeline";
 
 import { noteService } from "../features/notes/noteService";
 import { commentService } from "../features/comments/commentService";
@@ -461,6 +462,11 @@ function NoteDetailsPage() {
           </section>
         </FeatureGate>
       )}
+
+      {note && (
+      <NoteActivityTimeline noteId={noteId} />
+    )}
+
 
       <CommentForm
         onAddComment={handleAddComment}

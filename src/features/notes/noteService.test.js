@@ -295,4 +295,46 @@ describe("noteService", () => {
 
     expect(result).toEqual(fakeResponse.data);
   });
+
+  test("getNoteActivity requests the correct endpoint with pagination", async () => {
+    const fakeResponse = {
+        data: {
+            success: true,
+            message: "Note activity fetched successfully",
+            data: {
+                activities: [],
+                pagination: {
+                    totalLogs: 0,
+                    currentPage: 2,
+                    totalPages: 0,
+                    limit: 10,
+                    hasNextPage: false,
+                    hasPrevPage: true,
+                },
+            },
+        },
+    };
+
+    axiosInstance.get.mockResolvedValue(fakeResponse);
+
+    const result = await noteService.getNoteActivity(
+        "note123",
+        {
+            page: 2,
+            limit: 10,
+        }
+    );
+
+    expect(axiosInstance.get).toHaveBeenCalledWith(
+        "/notes/note123/activity",
+        {
+            params: {
+                page: 2,
+                limit: 10,
+            },
+        }
+    );
+
+    expect(result).toEqual(fakeResponse.data);
+});
 });
